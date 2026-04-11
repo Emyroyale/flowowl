@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowSpaceFocus — Focus Timer for Distracted Minds</title>
+  <link rel="icon" type="image/png" href="/owlface.png" />
+  <link rel="shortcut icon" type="image/png" href="/owlface.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --bg:       #080614;
+      --accent:   #7c4dff;
+      --a-dim:    rgba(124,77,255,.14);
+      --a-text:   #b39dff;
+      --border:   rgba(110,60,220,.18);
+      --border-h: rgba(124,77,255,.48);
+      --text:     #ede8ff;
+      --muted:    rgba(188,163,255,.42);
+      --dot:      rgba(88,48,185,.14);
+      --mono:     'JetBrains Mono', monospace;
+      --sans:     'Inter', sans-serif;
+
+      /* card palette */
+      --pink:   #ff3fa4;
+      --cyan:   #00d4f5;
+      --yellow: #ffd60a;
+      --purple: #7b5cf6;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── dot grid ── */
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image: radial-gradient(circle, var(--dot) 1.4px, transparent 1.4px);
+      background-size: 26px 26px;
+    }
+
+    /* ── ambient glow ── */
+    .glow-orb {
+      position:fixed; border-radius:50%; pointer-events:none; z-index:0;
+      filter:blur(80px);
+    }
+    .glow-orb.a { width:600px;height:600px; top:-100px;left:-100px;
+      background:radial-gradient(circle, rgba(100,40,255,.13) 0%,transparent 70%); }
+    .glow-orb.b { width:500px;height:500px; top:20%;right:-80px;
+      background:radial-gradient(circle, rgba(0,212,245,.07) 0%,transparent 70%); }
+    .glow-orb.c { width:400px;height:400px; bottom:10%;left:20%;
+      background:radial-gradient(circle, rgba(255,63,164,.06) 0%,transparent 70%); }
+
+    /* ── top line ── */
+    .top-line {
+      position:fixed; top:0;left:0;right:0; height:1px; z-index:100;
+      background:linear-gradient(to right,transparent,var(--accent),transparent);
+    }
+
+    /* ── floating ASCII ── */
+    .char {
+      position:fixed; font-family:var(--mono); font-weight:600;
+      pointer-events:none; z-index:0;
+      opacity:var(--op,.25);
+    }
+
+    /* ════════════════ NAVBAR ════════════════ */
+    nav {
+      position:relative; z-index:10;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 52px;
+      border-bottom:1px solid var(--border);
+      backdrop-filter:blur(12px);
+    }
+    .logo { font-size:17px; font-weight:700; letter-spacing:-.3px; color:var(--text); }
+    .nav-links { display:flex; align-items:center; gap:32px; }
+    .nav-link { font-size:13px; color:var(--muted); cursor:pointer; transition:color .2s; background:none;border:none; }
+    .nav-link:hover { color:var(--text); }
+    .btn-nav {
+      background:var(--accent); color:#fff; border:none;
+      border-radius:999px; padding:9px 22px;
+      font-size:13px; font-weight:600; cursor:pointer;
+      box-shadow:0 0 24px rgba(124,77,255,.38);
+      transition:filter .2s,transform .15s;
+    }
+    .btn-nav:hover { filter:brightness(1.1); transform:scale(1.03); }
+
+    /* ════════════════ MAIN ════════════════ */
+    main {
+      position:relative; z-index:2;
+      display:flex; flex-direction:column; align-items:center;
+      padding:56px 52px 120px; gap:0;
+    }
+
+    /* ════════════════ HERO GRID ════════════════ */
+    .hero-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr 360px 1fr 1fr;
+      grid-template-rows:auto auto;
+      gap:0;
+      width:100%; max-width:1060px;
+      align-items:center;
+    }
+
+    /* Jules-style chip tags — left cluster */
+    .chips-left {
+      grid-column:1/3; grid-row:1/3;
+      display:flex; flex-direction:column;
+      align-items:flex-start; gap:12px;
+      padding-right:24px;
+    }
+    .chips-right {
+      grid-column:4/6; grid-row:1/3;
+      display:flex; flex-direction:column;
+      align-items:flex-start; gap:12px;
+      padding-left:24px;
+    }
+
+    /* ── Jules chip ── */
+    .chip {
+      display:inline-flex; align-items:center;
+      font-family:var(--mono); font-size:17px; font-weight:700;
+      color:#0b0618;
+      border-radius:8px;
+      padding:14px 22px;
+      cursor:default;
+      position:relative; overflow:hidden;
+      transition:transform .2s cubic-bezier(.22,.68,0,1.2), box-shadow .2s;
+      /* dot texture like Jules */
+      background-image:radial-gradient(circle,rgba(0,0,0,.18) 1px,transparent 1px);
+      background-size:10px 10px;
+      white-space:nowrap;
+    }
+    .chip:hover { transform:translateY(-3px) scale(1.02); box-shadow:0 10px 32px rgba(0,0,0,.4); }
+
+    /* inner border */
+    .chip::before {
+      content:''; position:absolute; inset:0; border-radius:8px;
+      border:2px solid rgba(255,255,255,.15); pointer-events:none;
+    }
+    /* top shine */
+    .chip::after {
+      content:''; position:absolute; top:0;left:0;right:0;height:45%;
+      background:linear-gradient(to bottom,rgba(255,255,255,.10),transparent);
+      border-radius:8px 8px 0 0; pointer-events:none;
+    }
+
+    .chip-pink   { background-color:var(--pink); }
+    .chip-cyan   { background-color:var(--cyan); }
+    .chip-yellow { background-color:var(--yellow); }
+    .chip-purple { background-color:var(--purple); color:#fff; }
+
+    /* ── Owl center — frameless ── */
+    .owl-center {
+      grid-column:2; grid-row:1/3;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      position:relative; min-height:420px;
+    }
+    .owl-aura {
+      position:absolute; width:440px;height:440px; border-radius:50%;
+      background:radial-gradient(circle,rgba(124,77,255,.22) 0%,rgba(80,30,220,.06) 50%,transparent 70%);
+      filter:blur(28px);
+      opacity:.8;
+    }
+
+    .owl-img {
+      width:320px;height:320px; object-fit:contain;
+      position:relative; z-index:2;
+      filter:drop-shadow(0 0 56px rgba(120,70,255,.6)) drop-shadow(0 14px 36px rgba(0,0,0,.55));
+    }
+
+    .owl-badge {
+      display:inline-flex; align-items:center; gap:7px;
+      background:rgba(124,77,255,.09); border:1px solid rgba(124,77,255,.24);
+      border-radius:999px; padding:6px 14px;
+      font-size:11px; color:var(--a-text); font-weight:500;
+      margin-top:14px; position:relative; z-index:2;
+    }
+    .owl-dot { width:6px;height:6px;border-radius:50%;background:var(--accent);
+      animation:blink 1.6s ease-in-out infinite; }
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+
+    /* ════════════════ HEADLINE ════════════════ */
+    .headline {
+      text-align:center; margin-top:52px; max-width:700px;
+    }
+    .headline h1 {
+      font-size:62px; font-weight:900;
+      line-height:1.06; letter-spacing:-2.8px; color:#fff;
+    }
+    .headline h1 em { font-style:normal; color:var(--accent); display:block; }
+    .headline p {
+      margin:18px auto 0; font-size:15px; color:var(--muted);
+      line-height:1.8; max-width:480px;
+    }
+    .cta-row {
+      display:flex; align-items:center; gap:12px;
+      justify-content:center; margin-top:28px;
+    }
+    .btn-cta {
+      background:var(--accent); color:#fff; border:none;
+      border-radius:999px; padding:14px 30px;
+      font-size:14px; font-weight:700; cursor:pointer;
+      box-shadow:0 0 34px rgba(124,77,255,.5);
+      transition:filter .2s,transform .15s;
+    }
+    .btn-cta:hover { filter:brightness(1.12); transform:scale(1.04); }
+    .btn-alt {
+      background:transparent; color:var(--muted);
+      border:1px solid var(--border); border-radius:999px;
+      padding:14px 30px; font-size:14px; font-weight:500; cursor:pointer;
+      transition:border-color .2s,color .2s;
+    }
+    .btn-alt:hover { border-color:var(--border-h); color:var(--text); }
+
+    /* ════════════════ JOURNEY — Jules alternating style ════════════════ */
+    .journey {
+      width:100%; max-width:1060px; margin-top:80px;
+    }
+    .section-label {
+      font-family:var(--mono); font-size:11px; color:var(--muted);
+      letter-spacing:.14em; text-transform:uppercase; margin-bottom:0;
+    }
+
+    /* pixel-art zigzag divider */
+    .pixel-divider {
+      width:100%; overflow:hidden; height:18px;
+      margin:32px 0;
+      background-image: repeating-linear-gradient(
+        90deg,
+        transparent 0px, transparent 10px,
+        rgba(100,60,220,.28) 10px, rgba(100,60,220,.28) 20px
+      );
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='18'%3E%3Cpath d='M0 9 L10 0 L20 9 L10 18 Z' fill='black'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='18'%3E%3Cpath d='M0 9 L10 0 L20 9 L10 18 Z' fill='black'/%3E%3C/svg%3E");
+      mask-size:20px 18px;
+      -webkit-mask-size:20px 18px;
+      mask-repeat:repeat-x;
+      -webkit-mask-repeat:repeat-x;
+    }
+
+    /* single journey step row */
+    .jstep {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:48px;
+      align-items:center;
+      padding:40px 0;
+    }
+    .jstep.flip { direction:rtl; }
+    .jstep.flip > * { direction:ltr; }
+
+    /* left: text side */
+    .jstep-text { display:flex; flex-direction:column; gap:12px; }
+
+    .jstep-num {
+      width:44px; height:44px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      font-family:var(--mono); font-size:20px; font-weight:700; color:#0b0618;
+      /* dot texture */
+      background-image:radial-gradient(circle,rgba(0,0,0,.2) 1px,transparent 1px);
+      background-size:9px 9px;
+      flex-shrink:0;
+    }
+    .jstep-num.n1 { background-color:var(--purple); color:#fff; }
+    .jstep-num.n2 { background-color:var(--yellow); }
+    .jstep-num.n3 { background-color:var(--cyan);   }
+    .jstep-num.n4 { background-color:var(--pink);   }
+
+    .jstep-text h3 {
+      font-family:var(--mono); font-size:22px; font-weight:700;
+      color:var(--text); line-height:1.25;
+    }
+    .jstep-text p {
+      font-family:var(--mono); font-size:13px; color:var(--muted); line-height:1.7;
+    }
+    .jstep-text a {
+      font-family:var(--mono); font-size:12px; color:var(--accent);
+      text-decoration:underline; cursor:pointer;
+    }
+
+    /* right: UI mockup card */
+    .jstep-ui {
+      background:rgba(16,8,42,.9);
+      border:1px solid var(--border); border-radius:12px;
+      overflow:hidden; backdrop-filter:blur(18px);
+      box-shadow:0 20px 60px rgba(0,0,0,.5);
+    }
+    .jui-bar {
+      display:flex; align-items:center; gap:7px;
+      padding:10px 14px; border-bottom:1px solid var(--border);
+      background:rgba(20,10,48,.5);
+    }
+    .jui-dot { width:9px;height:9px;border-radius:50%; }
+    .jui-body { padding:20px; }
+
+    /* genre picker mockup */
+    .genre-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:8px;
+    }
+    .genre-btn {
+      font-family:var(--mono); font-size:12px; font-weight:700;
+      padding:11px 14px; border-radius:7px; cursor:pointer;
+      border:none; text-align:left;
+      background-image:radial-gradient(circle,rgba(0,0,0,.18) 1px,transparent 1px);
+      background-size:9px 9px;
+      transition:transform .15s;
+    }
+    .genre-btn:hover { transform:scale(1.03); }
+    .gb-binaural  { background:#1a0a3a; color:#b39dff; }
+    .gb-afrobeats { background:#7a1a00; color:#ff9060; }
+    .gb-kompa     { background:#003a2a; color:#00ff9a; }
+    .gb-classical { background:#1a0830; color:#e080ff; }
+    .gb-lofi      { background:#0a1a30; color:#60b0ff; }
+    .gb-jazz      { background:#2a1000; color:#ffb040; }
+
+    /* timer mockup */
+    .timer-mock {
+      display:flex; flex-direction:column; align-items:center; gap:10px; padding:8px 0;
+    }
+    .timer-ring-mock {
+      width:100px;height:100px; border-radius:50%;
+      border:6px solid rgba(124,77,255,.18);
+      border-top-color:var(--accent);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .timer-digits {
+      font-family:var(--mono); font-size:22px; font-weight:700; color:#fff;
+    }
+    /* coach chat mockup */
+    .coach-mock { display:flex; flex-direction:column; gap:10px; }
+    .cm-owl-msg, .cm-user-msg {
+      display:flex; flex-direction:column; gap:3px;
+    }
+    .cm-label {
+      font-family:var(--mono); font-size:10px; font-weight:700;
+    }
+    .cm-label.owl  { color:var(--accent); }
+    .cm-label.user { color:rgba(150,185,255,.5); }
+    .cm-bubble {
+      font-family:var(--mono); font-size:12px; line-height:1.55;
+      padding:10px 13px; border-radius:8px;
+    }
+    .cm-owl-msg .cm-bubble  { background:rgba(124,77,255,.12); color:rgba(210,195,255,.85); border:1px solid rgba(124,77,255,.2); }
+    .cm-user-msg .cm-bubble { background:rgba(255,255,255,.05); color:rgba(150,185,255,.6);  border:1px solid rgba(255,255,255,.08); }
+
+    /* flow stats mockup */
+    .stats-mock { display:flex; flex-direction:column; gap:10px; }
+    .stat-row { display:flex; justify-content:space-between; align-items:center; }
+    .stat-row-label { font-family:var(--mono); font-size:11px; color:var(--muted); }
+    .stat-bar-wrap { flex:1; height:6px; background:rgba(124,77,255,.12); border-radius:3px; margin:0 12px; }
+    .stat-bar { height:100%; border-radius:3px; animation:growBar .8s ease forwards; }
+    @keyframes growBar { from{width:0} }
+    .stat-val { font-family:var(--mono); font-size:11px; color:var(--accent); font-weight:700; }
+
+    /* ════════════════ PLAYLIST SHOWCASE ════════════════ */
+    .playlist-section {
+      width:100%; max-width:1060px; margin-top:72px;
+    }
+    .playlist-grid {
+      display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+    }
+    .playlist-card {
+      border-radius:12px; padding:22px 20px;
+      position:relative; overflow:hidden; cursor:pointer;
+      transition:transform .22s cubic-bezier(.22,.68,0,1.2), box-shadow .22s;
+    }
+    .playlist-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,.45); }
+    .playlist-card::before {
+      content:''; position:absolute; inset:0; border-radius:12px;
+      border:1.5px solid rgba(255,255,255,.12); pointer-events:none;
+    }
+    /* Dot texture */
+    .playlist-card::after {
+      content:''; position:absolute; inset:0;
+      background-image:radial-gradient(circle,rgba(0,0,0,.18) 1px,transparent 1px);
+      background-size:11px 11px; border-radius:12px; pointer-events:none;
+    }
+    .pc-binaural { background:linear-gradient(145deg,#1a0a3a 0%,#3d1fa8 100%); }
+    .pc-afrobeats { background:linear-gradient(145deg,#7a1a00 0%,#ff5c00 100%); }
+    .pc-kompa    { background:linear-gradient(145deg,#003a2a 0%,#00c97a 100%); }
+    .pc-classical { background:linear-gradient(145deg,#1a0830 0%,#c060ff 100%); }
+
+    .playlist-badge {
+      position:relative; z-index:2;
+      display:inline-flex; align-items:center; gap:5px;
+      font-family:var(--mono); font-size:9px; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      padding:3px 9px; border-radius:4px; margin-bottom:14px;
+      background:rgba(255,255,255,.12); color:rgba(255,255,255,.6);
+    }
+    .badge-dot-sm {
+      width:5px;height:5px;border-radius:50%;
+      animation:blink 2s ease-in-out infinite;
+    }
+    .playlist-card h4 {
+      position:relative; z-index:2;
+      font-family:var(--mono); font-size:16px; font-weight:700;
+      color:#fff; margin-bottom:7px; line-height:1.3;
+    }
+    .playlist-card p {
+      position:relative; z-index:2;
+      font-size:11.5px; color:rgba(255,255,255,.5); line-height:1.6;
+    }
+    /* ════════════════ AI COACH PANEL ════════════════ */
+    .coach-section {
+      width:100%; max-width:1060px; margin-top:72px;
+      position:relative;
+    }
+    .coach-owl-wrap {
+      position:absolute; right:-24px; top:-80px;
+      z-index:20; pointer-events:none;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .coach-owl-aura {
+      position:absolute; width:200px;height:200px; border-radius:50%;
+      background:radial-gradient(circle,rgba(124,77,255,.24) 0%,transparent 68%);
+      filter:blur(20px); opacity:.8;
+    }
+    .coach-owl-img {
+      width:140px;height:140px; object-fit:contain;
+      position:relative; z-index:2;
+      filter:drop-shadow(0 0 28px rgba(120,70,255,.65)) drop-shadow(0 6px 20px rgba(0,0,0,.6));
+    }
+
+    .coach-layout {
+      display:grid; grid-template-columns:1fr 232px;
+      background:rgba(10,6,26,.95);
+      border:1px solid var(--border); border-radius:14px; overflow:hidden;
+      box-shadow:0 0 80px rgba(80,30,200,.08),0 32px 80px rgba(0,0,0,.6);
+      backdrop-filter:blur(24px);
+    }
+
+    /* chat side */
+    .chat-panel { display:flex;flex-direction:column; border-right:1px solid var(--border); }
+    .chat-topbar {
+      display:flex; align-items:center; gap:8px;
+      padding:11px 18px; border-bottom:1px solid var(--border);
+      background:rgba(18,9,44,.55);
+    }
+    .tb-dot { width:10px;height:10px;border-radius:50%; }
+    .tb-title { font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px; }
+    .tb-live {
+      margin-left:auto; display:flex; align-items:center; gap:5px;
+      font-family:var(--mono); font-size:9.5px; color:rgba(0,212,245,.7);
+      font-weight:600; letter-spacing:.08em;
+    }
+    .tb-live-dot {
+      width:6px;height:6px;border-radius:50%;background:#00d4f5;
+      animation:blink 1.2s ease-in-out infinite;
+    }
+
+    .chat-messages {
+      flex:1; padding:18px 18px 18px 0;
+      display:flex; flex-direction:column;
+      overflow:hidden; min-height:340px; max-height:340px;
+    }
+    .msg-row {
+      display:grid; grid-template-columns:42px 1fr;
+      align-items:baseline;
+      opacity:0; transform:translateY(5px);
+      transition:opacity .3s ease,transform .3s ease;
+    }
+    .msg-row.visible { opacity:1; transform:translateY(0); }
+    .ln {
+      font-family:var(--mono); font-size:11px;
+      color:rgba(100,75,190,.28); text-align:right;
+      padding-right:14px; user-select:none; line-height:1.9;
+    }
+    .msg-content { display:flex;flex-direction:column;gap:0; }
+    .msg-speaker { font-family:var(--mono);font-size:10.5px;font-weight:700; margin-bottom:1px; }
+    .msg-speaker.owl  { color:var(--accent); }
+    .msg-speaker.user { color:rgba(150,185,255,.55); }
+    .msg-text { font-family:var(--mono);font-size:12.5px;line-height:1.65; }
+    .msg-text.owl-msg  { color:rgba(215,200,255,.82); }
+    .msg-text.user-msg { color:rgba(150,185,255,.55); }
+    .msg-text.status   {
+      color:rgba(0,212,245,.45); font-size:10.5px;
+      letter-spacing:.04em; padding:5px 0;
+    }
+    .msg-blank { height:7px; }
+
+    .typing-row {
+      display:grid; grid-template-columns:42px 1fr; align-items:center;
+      opacity:0; transition:opacity .25s;
+    }
+    .typing-row.visible { opacity:1; }
+    .typing-dots { display:flex;gap:4px;align-items:center;padding:6px 0; }
+    .typing-dots span {
+      width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.45;
+      animation:dotB .85s ease-in-out infinite;
+    }
+    .typing-dots span:nth-child(2){animation-delay:.14s}
+    .typing-dots span:nth-child(3){animation-delay:.28s}
+    @keyframes dotB{0%,80%,100%{transform:translateY(0);opacity:.35}40%{transform:translateY(-5px);opacity:1}}
+
+    /* lock side */
+    .lock-panel {
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:28px 20px; gap:16px;
+      background:rgba(14,7,36,.65);
+    }
+    .lock-icon-wrap {
+      width:48px;height:48px; background:var(--a-dim);
+      border:1px solid rgba(124,77,255,.28); border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .lock-title { font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);text-align:center; }
+    .lock-desc  { font-size:11.5px;color:var(--muted);line-height:1.6;text-align:center; }
+    .lock-divider { width:100%;height:1px;background:var(--border); }
+    .lock-features { display:flex;flex-direction:column;gap:8px;width:100%; }
+    .lock-feat { display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--muted);line-height:1.5; }
+    .lock-feat-dot { width:5px;height:5px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0; }
+    .btn-unlock {
+      width:100%; background:var(--accent);color:#fff;border:none;
+      border-radius:9px;padding:11px 14px;
+      font-size:12px;font-weight:700;cursor:pointer;font-family:var(--mono);
+      box-shadow:0 0 22px rgba(124,77,255,.4);
+      transition:filter .2s;
+    }
+    .btn-unlock:hover { filter:brightness(1.12); }
+    .lock-sub { font-size:10.5px;color:rgba(140,110,210,.38);text-align:center;font-family:var(--mono); }
+
+    /* ════════════════ COACH TABS ════════════════ */
+    .coach-tabs-bar {
+      display:flex; gap:4px; margin-bottom:20px;
+      background:rgba(255,255,255,.04); border:1px solid var(--border);
+      border-radius:10px; padding:4px;
+    }
+    .coach-tab-btn {
+      flex:1; padding:8px 10px; border:none; border-radius:7px;
+      font-family:var(--mono); font-size:10.5px; font-weight:600;
+      letter-spacing:.04em; cursor:pointer; transition:all .2s;
+      background:transparent; color:var(--muted);
+    }
+    .coach-tab-btn.active {
+      background:var(--a-dim); color:var(--a-text);
+      border:1px solid rgba(124,77,255,.28);
+    }
+    .coach-tab-btn:not(.active):hover { color:rgba(210,190,255,.65); }
+
+    .coach-panel { display:none; }
+    .coach-panel.active { display:block; }
+
+    /* Pre-session panel */
+    .pre-coach-card {
+      background:rgba(10,6,26,.95); border:1px solid var(--border);
+      border-radius:14px; overflow:hidden;
+      box-shadow:0 0 60px rgba(80,30,200,.08),0 24px 60px rgba(0,0,0,.5);
+    }
+    .pre-coach-header {
+      display:flex; align-items:center; gap:8px;
+      padding:10px 16px; border-bottom:1px solid var(--border);
+      background:rgba(18,9,44,.55);
+    }
+    .pre-live-dot {
+      width:6px;height:6px;border-radius:50%;background:var(--accent);
+      animation:blink 1.4s ease-in-out infinite;
+    }
+    .pre-coach-messages {
+      display:flex; flex-direction:column; gap:10px;
+      padding:16px; min-height:160px;
+    }
+    .pre-msg { display:flex; }
+    .pre-msg.owl { justify-content:flex-start; }
+    .pre-msg.user { justify-content:flex-end; }
+    .pre-bubble {
+      font-family:var(--mono); font-size:12px; line-height:1.6;
+      padding:10px 14px; border-radius:10px; max-width:80%;
+    }
+    .pre-msg.owl .pre-bubble {
+      background:rgba(124,77,255,.12); color:rgba(215,200,255,.85);
+      border:1px solid rgba(124,77,255,.2); border-radius:10px 10px 10px 2px;
+    }
+    .pre-msg.user .pre-bubble {
+      background:var(--accent); color:#fff; font-weight:600;
+      border-radius:10px 10px 2px 10px;
+    }
+    .pre-coach-input {
+      display:flex; gap:8px; padding:12px 16px;
+      border-top:1px solid var(--border);
+    }
+    .pre-input-field {
+      flex:1; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+      border-radius:8px; padding:9px 14px; font-family:var(--mono);
+      font-size:12px; color:rgba(180,160,255,.5); outline:none;
+    }
+    .pre-send-btn {
+      background:var(--accent); border:none; border-radius:8px;
+      padding:9px 18px; font-family:var(--mono); font-size:12px;
+      font-weight:700; color:#fff; cursor:pointer;
+      box-shadow:0 0 14px rgba(124,77,255,.35); transition:filter .2s;
+    }
+    .pre-send-btn:hover { filter:brightness(1.12); }
+    .pre-skip {
+      text-align:center; padding:8px 0 12px;
+      font-family:var(--mono); font-size:10.5px; color:rgba(140,110,210,.35);
+    }
+
+    /* Post-session panel */
+    .post-coach-card {
+      background:rgba(10,6,26,.95); border:1px solid var(--border);
+      border-radius:14px; overflow:hidden;
+      box-shadow:0 0 60px rgba(80,30,200,.08),0 24px 60px rgba(0,0,0,.5);
+    }
+    .post-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 16px; border-bottom:1px solid var(--border);
+      background:rgba(18,9,44,.55);
+    }
+    .post-header-left { display:flex; align-items:center; gap:8px; }
+    .post-pro-badge {
+      font-family:var(--mono); font-size:9px; font-weight:700;
+      letter-spacing:.14em; text-transform:uppercase;
+      padding:3px 9px; border-radius:20px;
+      background:rgba(124,77,255,.18); color:var(--a-text);
+      border:1px solid rgba(124,77,255,.3);
+    }
+    .post-dur-pill {
+      font-family:var(--mono); font-size:9px; font-weight:600;
+      padding:3px 9px; border-radius:20px;
+      background:rgba(124,77,255,.10); color:rgba(180,160,255,.6);
+      border:1px solid rgba(124,77,255,.18);
+    }
+    .post-task-strip {
+      display:flex; align-items:center; gap:6px;
+      padding:7px 16px; border-bottom:1px solid rgba(124,77,255,.07);
+      font-family:var(--mono); font-size:10.5px; color:rgba(150,130,200,.4);
+    }
+    .post-messages {
+      display:flex; flex-direction:column; gap:10px;
+      padding:14px 16px; max-height:220px; overflow:hidden;
+    }
+    .post-msg { display:flex; }
+    .post-msg.owl { justify-content:flex-start; }
+    .post-msg.user { justify-content:flex-end; }
+    .post-bubble {
+      font-family:var(--mono); font-size:12px; line-height:1.6;
+      padding:10px 14px; border-radius:10px; max-width:80%;
+    }
+    .post-msg.owl .post-bubble {
+      background:rgba(124,77,255,.12); color:rgba(215,200,255,.85);
+      border:1px solid rgba(124,77,255,.2); border-radius:10px 10px 10px 2px;
+    }
+    .post-msg.user .post-bubble {
+      background:var(--accent); color:#fff; font-weight:600;
+      border-radius:10px 10px 2px 10px;
+    }
+    .post-summary-btn {
+      margin:0 16px 12px; width:calc(100% - 32px);
+      background:transparent; border:1px solid rgba(124,77,255,.28);
+      border-radius:8px; padding:9px; font-family:var(--mono);
+      font-size:11px; font-weight:600; color:var(--a-text);
+      cursor:pointer; transition:all .2s;
+    }
+    .post-summary-btn:hover { background:rgba(124,77,255,.1); }
+    .post-input-row {
+      display:flex; gap:8px; padding:0 16px 14px;
+    }
+
+    /* Mid-session panel */
+    .mid-panel-wrap {
+      display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:center;
+    }
+    .mid-timer-side {
+      display:flex; flex-direction:column; align-items:center; gap:16px;
+    }
+    .mid-timer-ring-wrap {
+      position:relative; width:180px; height:180px;
+    }
+    .mid-timer-ring-wrap svg { position:absolute; inset:0; }
+    .mid-timer-label {
+      position:absolute; inset:0; display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+    }
+    .mid-timer-time {
+      font-family:var(--mono); font-size:28px; font-weight:700; color:#fff;
+    }
+    .mid-timer-sub {
+      font-family:var(--mono); font-size:10px; color:var(--muted);
+    }
+    .mid-task-chip {
+      font-family:var(--mono); font-size:11px;
+      padding:6px 14px; border-radius:20px;
+      background:rgba(124,77,255,.12); color:var(--a-text);
+      border:1px solid rgba(124,77,255,.22);
+    }
+    .mid-owl-side {
+      display:flex; flex-direction:column; align-items:center; gap:12px;
+    }
+    .mid-speech-bubble {
+      background:rgba(10,6,26,.95); border:1px solid rgba(124,77,255,.35);
+      border-radius:14px 14px 14px 4px;
+      padding:14px 16px; max-width:220px; position:relative;
+      box-shadow:0 8px 32px rgba(80,30,200,.15);
+    }
+    .mid-bubble-tag {
+      display:inline-flex; align-items:center; gap:5px;
+      font-family:var(--mono); font-size:9px; font-weight:700;
+      letter-spacing:.12em; text-transform:uppercase;
+      padding:2px 8px; border-radius:20px; margin-bottom:8px;
+      background:rgba(124,77,255,.18); color:var(--a-text);
+    }
+    .mid-bubble-text {
+      font-family:var(--mono); font-size:12px; line-height:1.6;
+      color:rgba(215,200,255,.85);
+    }
+    .mid-owl-img {
+      width:100px; height:100px; object-fit:contain;
+      filter:drop-shadow(0 0 20px rgba(120,70,255,.55));
+    }
+
+    /* Insights panel */
+    .insights-panel-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:16px;
+    }
+    .insight-card {
+      background:rgba(10,6,26,.95); border:1px solid var(--border);
+      border-radius:14px; padding:18px;
+    }
+    .insight-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:12px;
+    }
+    .insight-label {
+      display:flex; align-items:center; gap:6px;
+      font-family:var(--mono); font-size:10px; font-weight:700;
+      letter-spacing:.1em; text-transform:uppercase; color:rgba(150,130,200,.5);
+    }
+    .insight-stats {
+      display:flex; align-items:center; gap:8px;
+      font-family:var(--mono); font-size:10px; color:rgba(140,110,210,.35);
+    }
+    .insight-text {
+      font-family:var(--mono); font-size:12px; line-height:1.7;
+      color:rgba(215,200,255,.75);
+    }
+    .insight-ts {
+      margin-top:10px; font-family:var(--mono); font-size:9.5px;
+      color:rgba(140,110,210,.3);
+    }
+    .checkins-label {
+      font-family:var(--mono); font-size:9.5px; font-weight:700;
+      letter-spacing:.12em; text-transform:uppercase;
+      color:rgba(140,110,210,.35); margin-bottom:10px;
+    }
+    .checkin-row {
+      display:flex; align-items:flex-start; gap:10px;
+      padding:10px 12px; border-radius:10px; margin-bottom:8px;
+      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06);
+    }
+    .checkin-icon {
+      width:24px; height:24px; border-radius:50%; flex-shrink:0;
+      background:rgba(124,77,255,.14);
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; color:var(--a-text); margin-top:1px;
+    }
+    .checkin-preview {
+      font-family:var(--mono); font-size:11px;
+      color:rgba(180,160,255,.5); line-height:1.5; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis; max-width:200px;
+    }
+    .checkin-meta {
+      font-family:var(--mono); font-size:9.5px;
+      color:rgba(140,110,210,.3); margin-top:2px;
+    }
+
+    /* ════════════════ PRICING ════════════════ */
+    .pricing-section {
+      width:100%; max-width:1060px; margin-top:80px;
+    }
+    .pricing-head { text-align:center; margin-bottom:36px; }
+    .pricing-head h2 {
+      font-family:var(--mono); font-size:22px; font-weight:700; color:#fff;
+    }
+    .pricing-head p {
+      font-family:var(--mono); font-size:13px; color:var(--muted);
+      margin-top:8px; line-height:1.6;
+    }
+    .pricing-grid {
+      display:grid; grid-template-columns:repeat(2,1fr); gap:20px; max-width:760px; margin:0 auto;
+    }
+    .price-card {
+      background:rgba(16,8,42,.88);
+      border:1px solid var(--border); border-radius:12px;
+      padding:28px 24px; display:flex; flex-direction:column; gap:16px;
+      backdrop-filter:blur(18px);
+      transition:border-color .25s, box-shadow .25s;
+    }
+    .price-card:hover { border-color:var(--border-h); box-shadow:0 0 40px rgba(124,77,255,.12); }
+    .price-card.featured {
+      border-color:rgba(124,77,255,.5);
+      box-shadow:0 0 40px rgba(124,77,255,.15);
+    }
+
+    .price-top { display:flex; align-items:center; justify-content:space-between; }
+    .price-name {
+      font-family:var(--mono); font-size:17px; font-weight:700; color:#fff;
+    }
+    .price-badge-row { display:flex; align-items:center; gap:6px; }
+    /* three mini colored squares like Jules */
+    .mini-sq { width:12px;height:12px;border-radius:3px; }
+
+    .plan-badge {
+      font-family:var(--mono); font-size:11px; font-weight:700;
+      padding:3px 10px; border-radius:5px;
+    }
+    .plan-badge.pro   { background:var(--accent); color:#fff; }
+    .plan-badge.ultra { background:var(--yellow); color:#0b0618; }
+
+    .price-desc {
+      font-family:var(--mono); font-size:12.5px; color:var(--muted); line-height:1.6;
+    }
+    .price-list { display:flex; flex-direction:column; gap:9px; list-style:none; }
+    .price-list li {
+      font-family:var(--mono); font-size:12px; color:rgba(200,185,255,.7);
+      display:flex; align-items:flex-start; gap:8px; line-height:1.5;
+    }
+    .price-list li::before {
+      content:''; width:5px;height:5px;border-radius:50%;
+      background:var(--accent); flex-shrink:0; margin-top:5px;
+    }
+    .price-cta {
+      margin-top:auto; width:100%; padding:13px 12px;
+      font-family:var(--mono); font-size:12px; font-weight:700;
+      border-radius:8px; border:none; cursor:pointer;
+      line-height:1.3;
+      transition:filter .2s, transform .15s;
+    }
+    .price-cta:hover { filter:brightness(1.1); transform:scale(1.02); }
+    .price-cta.free     { background:rgba(124,77,255,.15); color:var(--accent); border:1px solid rgba(124,77,255,.3); }
+    .price-cta.paid     { background:var(--accent); color:#fff; box-shadow:0 0 22px rgba(124,77,255,.4); }
+    .price-cta.paid-ult { background:var(--yellow); color:#0b0618; box-shadow:0 0 22px rgba(255,214,10,.3); }
+
+    .price-footer { font-family:var(--mono); font-size:10px; color:rgba(140,110,210,.35); text-align:center; }
+  </style>
+</head>
+<body>
+
+<!-- Ambient -->
+<div class="glow-orb a"></div>
+<div class="glow-orb b"></div>
+<div class="glow-orb c"></div>
+<div class="top-line"></div>
+
+<!-- ASCII float -->
+<span class="char" style="top:13%;left:5%;font-size:13px;color:rgba(150,100,255,.4);--dur:5.5s;--delay:0s;--op:.4;">M</span>
+<span class="char" style="top:28%;left:3%;font-size:11px;color:rgba(130,90,240,.25);--dur:7s;--delay:1s;--op:.25;">0MMx</span>
+<span class="char" style="top:43%;left:6%;font-size:12px;color:rgba(160,110,255,.35);--dur:6s;--delay:2s;--op:.35;">W</span>
+<span class="char" style="top:59%;left:2%;font-size:10px;color:rgba(120,85,220,.22);--dur:8s;--delay:.5s;--op:.22;">;cl:</span>
+<span class="char" style="top:74%;left:7%;font-size:13px;color:rgba(140,95,245,.30);--dur:5s;--delay:1.8s;--op:.30;">K</span>
+<span class="char" style="top:19%;left:89%;font-size:14px;color:rgba(160,110,255,.42);--dur:6.5s;--delay:.8s;--op:.42;">W</span>
+<span class="char" style="top:35%;left:92%;font-size:11px;color:rgba(130,90,240,.25);--dur:5.5s;--delay:2.2s;--op:.25;">MMc</span>
+<span class="char" style="top:51%;left:94%;font-size:12px;color:rgba(155,105,255,.35);--dur:7s;--delay:.3s;--op:.35;">M</span>
+<span class="char" style="top:66%;left:90%;font-size:10px;color:rgba(120,85,220,.22);--dur:6s;--delay:1.5s;--op:.22;">:xx;</span>
+<span class="char" style="top:80%;left:93%;font-size:13px;color:rgba(140,95,245,.28);--dur:5s;--delay:2.8s;--op:.28;">X</span>
+<span class="char" style="top:88%;left:34%;font-size:12px;color:rgba(145,100,250,.30);--dur:6s;--delay:3s;--op:.30;">c</span>
+<span class="char" style="top:85%;left:70%;font-size:10px;color:rgba(125,88,225,.22);--dur:8s;--delay:1.7s;--op:.22;">MMd</span>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">FlowSpaceFocus</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="#pricing" class="nav-link" style="text-decoration:none;">Pricing</a>
+    <a href="https://flowspacefocus.com/sign-in" class="nav-link" style="text-decoration:none;">Login</a>
+    <button class="btn-nav" onclick="window.location.href='flowspace-app.html'">Start Focusing Free</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ═══ HERO GRID ═══ -->
+  <div class="hero-grid">
+
+    <!-- Left chips -->
+    <div class="chips-left">
+      <div class="chip chip-pink">Someone keeps you on track</div>
+      <div class="chip chip-cyan">Sound that pulls you back in</div>
+    </div>
+
+    <!-- Owl center — frameless -->
+    <div class="owl-center" style="grid-column:3;grid-row:1/3;">
+      <div class="owl-aura"></div>
+      <img class="owl-img"
+        src="/owlface.png"
+        alt="FlowSpaceFocus Owl"
+        onerror="this.style.display='none';"
+      />
+      <div class="owl-badge">
+        <span class="owl-dot"></span>
+        Built for ADHD minds &nbsp;&middot;&nbsp; No ads &nbsp;&middot;&nbsp; Just flow
+      </div>
+    </div>
+
+    <!-- Right chips -->
+    <div class="chips-right">
+      <div class="chip chip-yellow">A structure your brain can follow</div>
+      <div class="chip chip-purple">See where your focus breaks</div>
+    </div>
+
+  </div>
+
+  <!-- ═══ HEADLINE ═══ -->
+  <div class="headline">
+    <h1>You don't have a focus problem.<em>You have too many things pulling you away.</em></h1>
+    <p>FlowSpaceFocus helps you stay. Finish. And feel in control again.<br><span style="opacity:.6;">Built for minds that start strong but struggle to stay locked in. No noise. No guilt. Just progress.</span></p>
+    <div class="cta-row">
+      <button class="btn-cta">Start focusing for free &rarr;</button>
+      <button class="btn-alt">No pressure. Just one session.</button>
+    </div>
+  </div>
+
+  <!-- ═══ JOURNEY ═══ -->
+  <div class="journey">
+
+    <div class="pixel-divider"></div>
+
+    <!-- Step 1 -->
+    <div class="jstep">
+      <div class="jstep-text">
+        <div class="jstep-num n1">1</div>
+        <h3>Get into the zone faster than your distractions.</h3>
+        <p>Your brain needs the right entry point. Pick a sound that matches your energy so you don't fight yourself just to start.</p>
+        <a>Browse all 8 playlists</a>
+      </div>
+      <div class="jstep-ui">
+        <div class="jui-bar">
+          <span class="jui-dot" style="background:#ff5f57;"></span>
+          <span class="jui-dot" style="background:#febc2e;"></span>
+          <span class="jui-dot" style="background:#28c840;"></span>
+        </div>
+        <div class="jui-body">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:12px;">Select your focus genre</div>
+          <div class="genre-grid">
+            <div class="genre-btn gb-binaural">Binaural Beats</div>
+            <div class="genre-btn gb-afrobeats">Afrobeats</div>
+            <div class="genre-btn gb-kompa">Kompa</div>
+            <div class="genre-btn gb-classical">Classical</div>
+            <div class="genre-btn gb-lofi">Lofi</div>
+            <div class="genre-btn gb-jazz">Jazz Focus</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pixel-divider"></div>
+
+    <!-- Step 2 — flipped -->
+    <div class="jstep flip">
+      <div class="jstep-text">
+        <div class="jstep-num n2">2</div>
+        <h3>Give your brain a container.</h3>
+        <p>Without structure, focus leaks. Set your session. Let everything else fade out. You don't need motivation. You need boundaries.</p>
+      </div>
+      <div class="jstep-ui">
+        <div class="jui-bar">
+          <span class="jui-dot" style="background:#ff5f57;"></span>
+          <span class="jui-dot" style="background:#febc2e;"></span>
+          <span class="jui-dot" style="background:#28c840;"></span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:6px;">Binaural Beats · Playing</span>
+        </div>
+        <div class="jui-body">
+          <div class="timer-mock">
+            <div class="timer-ring-mock">
+              <span class="timer-digits">24:12</span>
+            </div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">Session 1 of 4</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">Binaural Beats · Playing</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pixel-divider"></div>
+
+    <!-- Step 3 -->
+    <div class="jstep">
+      <div class="jstep-text">
+        <div class="jstep-num n3">3</div>
+        <h3>You stop lying to yourself.</h3>
+        <p>After each session, your coach asks one simple question: "What pulled you away?" No shame. No pressure. Just awareness. Because you can't fix what you don't see.</p>
+        <a>Unlock with Pro</a>
+      </div>
+      <div class="jstep-ui">
+        <div class="jui-bar">
+          <span class="jui-dot" style="background:#ff5f57;"></span>
+          <span class="jui-dot" style="background:#febc2e;"></span>
+          <span class="jui-dot" style="background:#28c840;"></span>
+          <span style="font-family:var(--mono);font-size:10px;color:rgba(0,212,245,.6);margin-left:6px;">● Live</span>
+        </div>
+        <div class="jui-body">
+          <div class="coach-mock">
+            <div class="cm-owl-msg">
+              <span class="cm-label owl">FlowOwl:</span>
+              <div class="cm-bubble">Session done. 22 of 25 minutes focused. What pulled you away at minute 18?</div>
+            </div>
+            <div class="cm-user-msg">
+              <span class="cm-label user">You:</span>
+              <div class="cm-bubble">Slack. Someone pinged me.</div>
+            </div>
+            <div class="cm-owl-msg">
+              <span class="cm-label owl">FlowOwl:</span>
+              <div class="cm-bubble">Put Slack on DND next session. You're 2 sessions from your weekly goal.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pixel-divider"></div>
+
+    <!-- Step 4 — flipped -->
+    <div class="jstep flip">
+      <div class="jstep-text">
+        <div class="jstep-num n4">4</div>
+        <h3>Finally understand your focus.</h3>
+        <p>You start to notice patterns. When you drift. What pulls you out. When you perform best. This is where things change. Because now, you're not guessing anymore.</p>
+        <a>Unlock with Pro</a>
+      </div>
+      <div class="jstep-ui">
+        <div class="jui-bar">
+          <span class="jui-dot" style="background:#ff5f57;"></span>
+          <span class="jui-dot" style="background:#febc2e;"></span>
+          <span class="jui-dot" style="background:#28c840;"></span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:6px;">Flow Dashboard · This Week</span>
+        </div>
+        <div class="jui-body">
+          <div class="stats-mock">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px;">Focus by genre</div>
+            <div class="stat-row">
+              <span class="stat-row-label">Binaural</span>
+              <div class="stat-bar-wrap"><div class="stat-bar" style="width:82%;background:#7c4dff;"></div></div>
+              <span class="stat-val">82%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-row-label">Afrobeats</span>
+              <div class="stat-bar-wrap"><div class="stat-bar" style="width:65%;background:#ff5c00;"></div></div>
+              <span class="stat-val">65%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-row-label">Kompa</span>
+              <div class="stat-bar-wrap"><div class="stat-bar" style="width:71%;background:#00c97a;"></div></div>
+              <span class="stat-val">71%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-row-label">Classical</span>
+              <div class="stat-bar-wrap"><div class="stat-bar" style="width:58%;background:#c060ff;"></div></div>
+              <span class="stat-val">58%</span>
+            </div>
+            <div style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--muted);">Best hours: 9am and 2pm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pixel-divider"></div>
+
+  </div>
+
+  <!-- ═══ PLAYLIST SHOWCASE ═══ -->
+  <div class="playlist-section">
+    <div style="margin-bottom:20px;">
+      <div class="section-label" style="margin-bottom:8px;">// Focus playlists</div>
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;margin-bottom:6px;">Stop forcing focus. Use momentum.</div>
+      <div style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:1.7;">Different tasks need different energy.<br>Choose the sound that carries you instead of fighting your brain.</div>
+    </div>
+    <div class="playlist-grid">
+
+      <!-- Binaural -->
+      <div class="playlist-card pc-binaural">
+        <div class="playlist-badge"><span class="badge-dot-sm" style="background:#b39dff;"></span>Deep Focus</div>
+        <h4>Binaural Beats</h4>
+        <p>40 Hz gamma waves. Clinically studied for sustained attention and working memory.</p>
+      </div>
+
+      <!-- Afrobeats -->
+      <div class="playlist-card pc-afrobeats">
+        <div class="playlist-badge"><span class="badge-dot-sm" style="background:#ff9060;"></span>Energy Mode</div>
+        <h4>Afrobeats Focus</h4>
+        <p>Rhythmic energy without lyrics that pull your attention. Made for tasks that need momentum.</p>
+      </div>
+
+      <!-- Kompa -->
+      <div class="playlist-card pc-kompa">
+        <div class="playlist-badge"><span class="badge-dot-sm" style="background:#00ff9a;"></span>Flow State</div>
+        <h4>Kompa Flow</h4>
+        <p>Smooth Caribbean rhythm. Steady tempo that keeps your mind moving without spiking cortisol.</p>
+      </div>
+
+      <!-- Classical -->
+      <div class="playlist-card pc-classical">
+        <div class="playlist-badge"><span class="badge-dot-sm" style="background:#e080ff;"></span>Precision</div>
+        <h4>Classical Focus</h4>
+        <p>Mozart, Bach, Satie. Structured complexity that primes the prefrontal cortex for deep work.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ AI COACH PANEL ═══ -->
+  <div class="coach-section">
+    <div style="margin-bottom:28px;">
+      <div class="section-label" style="margin-bottom:8px;">// AI Accountability Coach — Pro</div>
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:10px;">You don't need discipline.<br>You need accountability.</div>
+      <div style="font-family:var(--mono);font-size:13px;color:var(--muted);line-height:1.8;max-width:560px;">Left alone, your mind drifts. Tabs open. Notifications win. Time disappears.<br><br>Your coach notices. It checks in. It asks the uncomfortable question. It pulls you back before you spiral.<br><br>Not harsh. Not robotic. Just honest.</div>
+    </div>
+
+    <!-- Owl free-floating above panel -->
+    <div class="coach-owl-wrap">
+      <div class="coach-owl-aura"></div>
+      <img class="coach-owl-img"
+        src="/owlface.png"
+        alt="FlowSpaceFocus Owl"
+        onerror="this.style.display='none';"
+      />
+    </div>
+
+    <!-- Tab bar -->
+    <div class="coach-tabs-bar">
+      <button class="coach-tab-btn active" onclick="switchCoachTab('pre',this)">① Before</button>
+      <button class="coach-tab-btn" onclick="switchCoachTab('post',this)">② After</button>
+      <button class="coach-tab-btn" onclick="switchCoachTab('mid',this)">③ Halfway</button>
+      <button class="coach-tab-btn" onclick="switchCoachTab('insights',this)">④ Insights</button>
+    </div>
+
+    <!-- ① Pre-session -->
+    <div class="coach-panel active" id="panel-pre">
+      <div class="pre-coach-card">
+        <div class="pre-coach-header">
+          <span class="pre-live-dot"></span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:4px;">AI Coach</span>
+          <span style="font-family:var(--mono);font-size:9px;color:rgba(140,110,210,.35);margin-left:auto;">Free</span>
+        </div>
+        <div class="pre-coach-messages" id="preMessages">
+          <!-- animated in JS -->
+        </div>
+        <div class="pre-coach-input">
+          <input class="pre-input-field" placeholder="Reply or press Enter to start..." readonly />
+          <button class="pre-send-btn">Send</button>
+        </div>
+        <div class="pre-skip">Skip and start now</div>
+      </div>
+    </div>
+
+    <!-- ② Post-session -->
+    <div class="coach-panel" id="panel-post">
+      <div class="post-coach-card">
+        <div class="post-header">
+          <div class="post-header-left">
+            <span style="color:var(--accent);font-size:13px;">✦</span>
+            <span style="font-family:var(--mono);font-size:11px;color:rgba(200,190,255,.8);font-weight:600;">AI Coach</span>
+            <span class="post-dur-pill">25 min session</span>
+          </div>
+          <span class="post-pro-badge">PRO</span>
+        </div>
+        <div class="post-task-strip">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Q2 Report — Executive Summary
+        </div>
+        <div class="post-messages" id="postMessages">
+          <!-- animated in JS -->
+        </div>
+        <button class="post-summary-btn" id="summaryBtn" style="display:none;">✦ Get session summary</button>
+        <div class="post-input-row">
+          <input class="pre-input-field" placeholder="Type your message..." readonly style="flex:1;" />
+          <button class="pre-send-btn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ Mid-session -->
+    <div class="coach-panel" id="panel-mid">
+      <div class="mid-panel-wrap">
+        <div class="mid-timer-side">
+          <div class="mid-timer-ring-wrap">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <circle cx="90" cy="90" r="78" fill="none" stroke="rgba(124,77,255,.1)" stroke-width="10"/>
+              <circle cx="90" cy="90" r="78" fill="none" stroke="rgba(124,77,255,.55)" stroke-width="10"
+                stroke-dasharray="490" stroke-dashoffset="245"
+                stroke-linecap="round" transform="rotate(-90 90 90)"/>
+            </svg>
+            <div class="mid-timer-label">
+              <div class="mid-timer-time">12:30</div>
+              <div class="mid-timer-sub">halfway</div>
+            </div>
+          </div>
+          <div class="mid-task-chip">Q2 Report — Summary</div>
+          <div style="font-family:var(--mono);font-size:10px;color:rgba(140,110,210,.35);">Binaural Beats · running</div>
+        </div>
+        <div class="mid-owl-side">
+          <div class="mid-speech-bubble">
+            <div class="mid-bubble-tag">
+              <span class="pre-live-dot" style="width:5px;height:5px;"></span>
+              Halfway there
+            </div>
+            <div class="mid-bubble-text" id="midNudgeText">Halfway done. The hard part is over.</div>
+          </div>
+          <img class="mid-owl-img"
+            src="/owlface.png"
+            alt="FlowSpaceFocus Owl"
+            onerror="this.style.display='none';"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ Insights -->
+    <div class="coach-panel" id="panel-insights">
+      <div class="insights-panel-grid">
+        <!-- Weekly insight card -->
+        <div class="insight-card">
+          <div class="insight-header">
+            <div class="insight-label">
+              <span style="color:var(--accent);">✦</span> This week
+            </div>
+            <div class="insight-stats">
+              <span>7 sessions</span><span>·</span><span>182 min</span>
+            </div>
+          </div>
+          <div class="insight-text" id="insightText">You focus best between 9–11am. Morning sessions average 23 minutes versus 14 minutes in the afternoon. Block your mornings for deep work next week.</div>
+          <div class="insight-ts">Generated 2h ago</div>
+        </div>
+        <!-- Recent check-ins -->
+        <div class="insight-card">
+          <div class="checkins-label">Recent check-ins</div>
+          <div class="checkin-row">
+            <div class="checkin-icon">✦</div>
+            <div>
+              <div class="checkin-preview">22 minutes clean. That's your best this week.</div>
+              <div class="checkin-meta">3 messages · 2h ago</div>
+            </div>
+          </div>
+          <div class="checkin-row">
+            <div class="checkin-icon">✦</div>
+            <div>
+              <div class="checkin-preview">Got the summary done. One section to go.</div>
+              <div class="checkin-meta">4 messages · yesterday</div>
+            </div>
+          </div>
+          <div class="checkin-row">
+            <div class="checkin-icon">✦</div>
+            <div>
+              <div class="checkin-preview">Solid start. Keep that momentum into tomorrow.</div>
+              <div class="checkin-meta">2 messages · 2 days ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ PRICING ═══ -->
+  <div class="pricing-section">
+    <div class="pricing-head">
+      <h2>How much is staying focused worth to you?</h2>
+      <p>Start free. Upgrade when you're ready to stop starting over.</p>
+    </div>
+
+    <div class="pricing-grid">
+
+      <!-- Free -->
+      <div class="price-card">
+        <div class="price-top">
+          <span class="price-name">FlowSpaceFocus</span>
+          <div class="price-badge-row">
+            <div class="mini-sq" style="background:rgba(124,77,255,.4);"></div>
+            <div class="mini-sq" style="background:rgba(124,77,255,.22);"></div>
+            <div class="mini-sq" style="background:rgba(124,77,255,.1);"></div>
+          </div>
+        </div>
+        <div style="font-family:var(--mono);font-size:24px;font-weight:800;color:#fff;">$0 <span style="font-size:13px;font-weight:400;color:var(--muted);">forever</span></div>
+        <div class="price-desc">One session. 15 minutes. Just enough to feel what focused work actually feels like again.</div>
+        <ul class="price-list">
+          <li>15-minute focus sessions</li>
+          <li>One focus playlist to start</li>
+          <li>Basic Pomodoro timer</li>
+          <li>No session history</li>
+          <li>No AI coach</li>
+        </ul>
+        <button class="price-cta free">Start free</button>
+        <div class="price-footer">No credit card required</div>
+      </div>
+
+      <!-- Pro -->
+      <div class="price-card featured">
+        <div class="price-top">
+          <span class="price-name">FlowSpaceFocus <span class="plan-badge pro">Pro</span></span>
+          <div class="price-badge-row">
+            <div class="mini-sq" style="background:var(--pink);"></div>
+            <div class="mini-sq" style="background:var(--accent);"></div>
+            <div class="mini-sq" style="background:rgba(124,77,255,.3);"></div>
+          </div>
+        </div>
+        <div style="font-family:var(--mono);font-size:24px;font-weight:800;color:#fff;">$9 <span style="font-size:13px;font-weight:400;color:var(--muted);">/month</span></div>
+        <div class="price-desc">You've seen what 15 minutes feels like. Now imagine stacking that into hours. Days. Real progress.</div>
+        <ul class="price-list">
+          <li>Unlimited sessions — no forced stops</li>
+          <li>AI coach — catches you when you slip</li>
+          <li>Focus history — see your patterns</li>
+          <li>Weekly insights — improve without guessing</li>
+          <li>All 8 genre playlists</li>
+          <li>Goal tracking</li>
+        </ul>
+        <button class="price-cta paid">Unlock full focus &mdash; $9/month</button>
+        <div class="price-footer">Cancel anytime</div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer style="
+  position:relative; z-index:10;
+  border-top:1px solid rgba(110,60,220,.14);
+  background:rgba(8,6,20,.85);
+  backdrop-filter:blur(12px);
+  padding:40px 52px 32px;
+  margin-top:80px;
+">
+  <div style="max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:28px;">
+
+    <!-- Top row: brand + nav -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:24px;">
+
+      <!-- Brand -->
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:280px;">
+        <div style="font-family:var(--mono);font-size:17px;font-weight:700;color:#fff;">FlowSpaceFocus</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.7;">Your focused workspace.<br>No ads. No distractions. Just flow.</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:blink 1.6s ease-in-out infinite;"></span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Built by Royale Automation</span>
+        </div>
+      </div>
+
+      <!-- Nav columns -->
+      <div style="display:flex;gap:52px;flex-wrap:wrap;">
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:rgba(180,155,255,.45);letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px;">Product</div>
+          <a href="#" style="font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">How it works</a>
+          <a href="#" style="font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">Playlists</a>
+          <a href="#" style="font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">Pricing</a>
+          <a href="https://blog.flowspacefocus.com/" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">Blog</a>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:rgba(180,155,255,.45);letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px;">Legal</div>
+          <a href="#" onclick="openModal('privacy');return false;" style="font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">Privacy Policy</a>
+          <a href="#" onclick="openModal('terms');return false;" style="font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">Terms of Service</a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="height:1px;background:rgba(110,60,220,.14);"></div>
+
+    <!-- Bottom row: copyright + tagline -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div style="font-family:var(--mono);font-size:11px;color:rgba(140,110,200,.35);">
+        &copy; 2026 FlowSpaceFocus by Royale Automation. All rights reserved.
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:rgba(140,110,200,.28);">
+        flowspacefocus.com
+      </div>
+    </div>
+
+  </div>
+</footer>
+
+<!-- ═══ MODALS ═══ -->
+<style>
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:999;
+    background:rgba(4,3,14,.88); backdrop-filter:blur(10px);
+    align-items:center; justify-content:center; padding:24px;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-box {
+    background:#0f0c22; border:1px solid rgba(110,60,220,.28);
+    border-radius:14px; max-width:640px; width:100%;
+    max-height:82vh; display:flex; flex-direction:column;
+    box-shadow:0 32px 80px rgba(0,0,0,.7);
+  }
+  .modal-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 24px; border-bottom:1px solid rgba(110,60,220,.18);
+    flex-shrink:0;
+  }
+  .modal-title { font-family:var(--mono); font-size:15px; font-weight:700; color:#fff; }
+  .modal-close {
+    background:none; border:none; cursor:pointer;
+    color:var(--muted); font-size:20px; line-height:1;
+    padding:4px 8px; border-radius:6px;
+    transition:color .2s, background .2s;
+  }
+  .modal-close:hover { color:#fff; background:rgba(255,255,255,.06); }
+  .modal-body {
+    overflow-y:auto; padding:24px 28px 32px;
+    font-family:var(--mono); font-size:12.5px; color:rgba(200,185,255,.65);
+    line-height:1.8;
+  }
+  .modal-body h3 {
+    font-size:13px; font-weight:700; color:var(--a-text);
+    margin:20px 0 6px; font-family:var(--mono);
+  }
+  .modal-body h3:first-child { margin-top:0; }
+  .modal-body p { margin-bottom:8px; }
+  .modal-last-updated {
+    margin-top:24px; padding-top:16px;
+    border-top:1px solid rgba(110,60,220,.18);
+    font-size:11px; color:rgba(140,110,200,.4);
+  }
+
+  /* ── Cookie Banner ── */
+  #cookie-banner {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    z-index:998; width:calc(100% - 48px); max-width:680px;
+    background:#0f0c22; border:1px solid rgba(110,60,220,.32);
+    border-radius:12px; padding:18px 22px;
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+    box-shadow:0 16px 48px rgba(0,0,0,.65), 0 0 0 1px rgba(124,77,255,.08);
+    backdrop-filter:blur(16px);
+    opacity:0; transition:opacity .35s ease, transform .35s ease;
+    pointer-events:none;
+  }
+  #cookie-banner.visible {
+    opacity:1; pointer-events:all;
+  }
+  #cookie-banner p {
+    font-family:var(--mono); font-size:12px; color:rgba(200,185,255,.6);
+    line-height:1.7; flex:1; min-width:200px; margin:0;
+  }
+  #cookie-banner p a {
+    color:var(--accent); text-decoration:underline; cursor:pointer;
+  }
+  .cookie-btns { display:flex; gap:10px; flex-shrink:0; }
+  .btn-cookie-accept {
+    background:var(--accent); color:#fff; border:none;
+    border-radius:7px; padding:9px 20px;
+    font-family:var(--mono); font-size:12px; font-weight:700;
+    cursor:pointer; transition:filter .2s;
+  }
+  .btn-cookie-accept:hover { filter:brightness(1.1); }
+  .btn-cookie-decline {
+    background:transparent; color:var(--muted);
+    border:1px solid rgba(110,60,220,.28); border-radius:7px;
+    padding:9px 16px; font-family:var(--mono); font-size:12px;
+    cursor:pointer; transition:border-color .2s, color .2s;
+  }
+  .btn-cookie-decline:hover { border-color:rgba(124,77,255,.5); color:var(--text); }
+</style>
+
+<!-- Privacy Policy Modal -->
+<div class="modal-overlay" id="modal-privacy" onclick="if(event.target===this)closeModal('privacy')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Privacy Policy</span>
+      <button class="modal-close" onclick="closeModal('privacy')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h3>1. Information We Collect</h3>
+      <p>We collect information you provide directly to us when you create an account, use FlowSpaceFocus, or interact with our services. This includes your email address, session data, and app preferences.</p>
+
+      <h3>2. How We Use Your Information</h3>
+      <p>We use the information we collect to provide, maintain, and improve our services, communicate with you, and personalize your experience. We do not sell your personal data to third parties.</p>
+
+      <h3>3. Data Security</h3>
+      <p>We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. We rely on industry leaders for our infrastructure to ensure your data is secure.</p>
+
+      <h3>4. Third-Party Services</h3>
+      <p>We use third-party services such as Clerk for authentication and Stripe for payment processing. These services have their own privacy policies governing the data they collect and process on our behalf.</p>
+
+      <h3>5. Contact Us</h3>
+      <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:emy@royaleautomation.com" style="color:var(--accent);">emy@royaleautomation.com</a>.</p>
+
+      <div class="modal-last-updated">Last updated: April 9, 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- Terms of Service Modal -->
+<div class="modal-overlay" id="modal-terms" onclick="if(event.target===this)closeModal('terms')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Terms of Service</span>
+      <button class="modal-close" onclick="closeModal('terms')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h3>1. Acceptance of Terms</h3>
+      <p>By accessing or using FlowSpaceFocus, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
+
+      <h3>2. Description of Service</h3>
+      <p>FlowSpaceFocus provides a focus timer tool with ambient music integrations designed to improve productivity. We reserve the right to modify or discontinue the service at any time without notice.</p>
+
+      <h3>3. User Accounts</h3>
+      <p>You are responsible for safeguarding the password and authentication methods you use to access FlowSpaceFocus. You agree not to disclose your password to any third party and to take sole responsibility for any activities or actions under your account.</p>
+
+      <h3>4. Prohibited Uses</h3>
+      <p>You may not use FlowSpaceFocus for any illegal or unauthorized purpose. You must not, in the use of the Service, violate any laws in your jurisdiction. Any violation of these terms may result in immediate termination of your account.</p>
+
+      <h3>5. Contact Information</h3>
+      <p>If you have any questions about these Terms, please contact us at <a href="mailto:emy@royaleautomation.com" style="color:var(--accent);">emy@royaleautomation.com</a>.</p>
+
+      <div class="modal-last-updated">Last updated: April 9, 2026</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCRIPT = [
+  { side:'status', text:'─── Session started · Binaural Beats · 25:00 ───' },
+  { side:'owl',    text:"What are you working on today?" },
+  { side:'user',   text:"Finishing the Q2 report. Been avoiding it all week." },
+  { side:'owl',    text:"Okay. What does done look like for you today?" },
+  { side:'user',   text:"Executive summary plus the three main sections. Maybe 4 pages." },
+  { side:'owl',    text:"Start with the executive summary. Three sentences, no editing. Go." },
+  { side:'status', text:'─── Minute 12 check-in ───' },
+  { side:'owl',    text:"Still on the summary?" },
+  { side:'user',   text:"Yeah. Actually going okay." },
+  { side:'owl',    text:"Good. Don't touch the structure. Just fill the sections." },
+  { side:'status', text:'─── Minute 18 · tab switch detected ───' },
+  { side:'owl',    text:"You opened a new tab. What happened?" },
+  { side:'user',   text:"Checked Slack. Someone needed something." },
+  { side:'owl',    text:"Put Slack on do not disturb. You have 7 minutes left. Close it." },
+  { side:'status', text:'─── Session complete · 22 of 25 min focused ───' },
+  { side:'owl',    text:"22 minutes clean. That's your best this week." },
+  { side:'user',   text:"Got the summary and one section done." },
+  { side:'owl',    text:"You focus best in the morning with Binaural on. I'll remind you tomorrow at 9am." },
+  { side:'user',   text:"Yeah do that." },
+  { side:'owl',    text:"Done. Two more sessions and you hit your weekly goal." },
+];
+
+const container = document.getElementById('chatMessages');
+const typingRow = document.getElementById('typingIndicator');
+const typingLn  = document.getElementById('typingLn');
+let lineNum = 1, msgIndex = 0;
+
+function addMessage(msg) {
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  if (msg.side === 'status') {
+    row.innerHTML = `<span class="ln">${lineNum++}</span><div class="msg-content"><span class="msg-text status">${msg.text}</span></div>`;
+  } else {
+    const label = msg.side === 'owl' ? 'FlowOwl' : 'You';
+    const sc    = msg.side === 'owl' ? 'owl' : 'user';
+    const tc    = msg.side === 'owl' ? 'owl-msg' : 'user-msg';
+    row.innerHTML = `<span class="ln">${lineNum++}</span><div class="msg-content"><span class="msg-speaker ${sc}">${label}:</span><span class="msg-text ${tc}">${msg.text}</span></div>`;
+  }
+  container.insertBefore(row, typingRow);
+  typingLn.textContent = lineNum;
+  requestAnimationFrame(() => row.classList.add('visible'));
+  container.scrollTop = container.scrollHeight;
+}
+
+function addBlank() {
+  const el = document.createElement('div');
+  el.className = 'msg-blank';
+  container.insertBefore(el, typingRow);
+  lineNum++;
+}
+
+function playNext() {
+  if (msgIndex >= SCRIPT.length) {
+    setTimeout(() => {
+      container.querySelectorAll('.msg-row,.msg-blank').forEach(r=>r.remove());
+      lineNum = 1; msgIndex = 0;
+      typingLn.textContent = lineNum;
+      setTimeout(playNext, 1200);
+    }, 4000);
+    return;
+  }
+  const msg  = SCRIPT[msgIndex];
+  const next = SCRIPT[msgIndex+1];
+  msgIndex++;
+
+  const pause = msg.side === 'status' ? 1400 : msg.side === 'owl' ? 1700 : 1500;
+  const typing = msg.side === 'owl' ? 700 + msg.text.length * 17 : msg.side === 'status' ? 500 : 0;
+
+  if (msg.side === 'owl' || msg.side === 'status') {
+    typingRow.classList.add('visible');
+    container.scrollTop = container.scrollHeight;
+    setTimeout(() => {
+      typingRow.classList.remove('visible');
+      addMessage(msg);
+      if (msg.side !== 'status') addBlank();
+      setTimeout(playNext, pause);
+    }, typing);
+  } else {
+    setTimeout(() => {
+      addMessage(msg);
+      addBlank();
+      setTimeout(playNext, pause);
+    }, 700);
+  }
+}
+
+setTimeout(playNext, 800);
+
+// ── Coach tab switcher ──
+function switchCoachTab(name, btn) {
+  document.querySelectorAll('.coach-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.coach-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ── Pre-session animated demo ──
+const PRE_SCRIPT = [
+  { side:'owl',  text:"What's the one concrete thing you'll finish this session?" },
+  { side:'user', text:"Write the executive summary. Three sentences max." },
+  { side:'owl',  text:"Good. Start with the conclusion first. It's faster." },
+];
+let preIdx = 0;
+function addPreMsg(msg) {
+  const el = document.createElement('div');
+  el.className = 'pre-msg ' + msg.side;
+  el.innerHTML = `<div class="pre-bubble">${msg.text}</div>`;
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(6px)';
+  el.style.transition = 'opacity .3s ease, transform .3s ease';
+  document.getElementById('preMessages').appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity='1'; el.style.transform='translateY(0)'; });
+}
+function runPreScript() {
+  if (preIdx >= PRE_SCRIPT.length) {
+    setTimeout(() => {
+      document.getElementById('preMessages').innerHTML = '';
+      preIdx = 0;
+      setTimeout(runPreScript, 800);
+    }, 4000);
+    return;
+  }
+  const msg = PRE_SCRIPT[preIdx++];
+  const delay = msg.side === 'owl' ? 900 + msg.text.length * 22 : 0;
+  setTimeout(() => {
+    addPreMsg(msg);
+    setTimeout(runPreScript, msg.side === 'owl' ? 1800 : 1200);
+  }, msg.side === 'owl' ? 600 : 400);
+}
+setTimeout(runPreScript, 1200);
+
+// ── Post-session animated demo ──
+const POST_SCRIPT = [
+  { side:'owl',  text:"You finished the Q2 Report session. How did it go?" },
+  { side:'user', text:"Got the summary done. One section still left." },
+  { side:'owl',  text:"One section from done is not the same as not done. What's your next session for?" },
+  { side:'user', text:"Finishing the Market Analysis section." },
+];
+let postIdx = 0;
+function addPostMsg(msg) {
+  const el = document.createElement('div');
+  el.className = 'post-msg ' + msg.side;
+  el.innerHTML = `<div class="post-bubble">${msg.text}</div>`;
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(6px)';
+  el.style.transition = 'opacity .3s ease, transform .3s ease';
+  document.getElementById('postMessages').appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity='1'; el.style.transform='translateY(0)'; });
+}
+function runPostScript() {
+  if (postIdx >= POST_SCRIPT.length) {
+    document.getElementById('summaryBtn').style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('postMessages').innerHTML = '';
+      document.getElementById('summaryBtn').style.display = 'none';
+      postIdx = 0;
+      setTimeout(runPostScript, 800);
+    }, 5000);
+    return;
+  }
+  const msg = POST_SCRIPT[postIdx++];
+  const delay = msg.side === 'owl' ? 700 + msg.text.length * 20 : 0;
+  setTimeout(() => {
+    addPostMsg(msg);
+    setTimeout(runPostScript, msg.side === 'owl' ? 1800 : 1400);
+  }, msg.side === 'owl' ? 600 : 400);
+}
+setTimeout(runPostScript, 1000);
+
+// ── Mid-session cycling nudges ──
+const NUDGES = [
+  'Halfway done. The hard part is over.',
+  'You showed up. Keep going.',
+  'Twelve minutes in. Stay with it.',
+  'Focus beats perfection every time.',
+];
+let nudgeIdx = 0;
+function cycleNudge() {
+  const el = document.getElementById('midNudgeText');
+  if (!el) return;
+  el.style.opacity = '0';
+  setTimeout(() => {
+    nudgeIdx = (nudgeIdx + 1) % NUDGES.length;
+    el.textContent = NUDGES[nudgeIdx];
+    el.style.opacity = '1';
+  }, 300);
+}
+setInterval(cycleNudge, 3500);
+
+// Cookie banner
+(function() {
+  if (localStorage.getItem('fs_cookies_accepted')) return;
+  const banner = document.getElementById('cookie-banner');
+  setTimeout(() => banner.classList.add('visible'), 900);
+  document.getElementById('btn-cookie-accept').addEventListener('click', function() {
+    localStorage.setItem('fs_cookies_accepted', '1');
+    banner.classList.remove('visible');
+  });
+  document.getElementById('btn-cookie-decline').addEventListener('click', function() {
+    banner.classList.remove('visible');
+  });
+})();
+
+function openModal(id) {
+  document.getElementById('modal-' + id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById('modal-' + id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    ['privacy','terms'].forEach(closeModal);
+  }
+});
+</script>
+<!-- Cookie Banner -->
+<div id="cookie-banner">
+  <p>
+    We use cookies to keep your session running and improve your experience.
+    By continuing, you agree to our <a href="#" onclick="openModal('privacy');return false;">Privacy Policy</a>.
+  </p>
+  <div class="cookie-btns">
+    <button class="btn-cookie-decline" id="btn-cookie-decline">Decline</button>
+    <button class="btn-cookie-accept" id="btn-cookie-accept">Accept</button>
+  </div>
+</div>
+
+</body>
+</html>
