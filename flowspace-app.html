@@ -4,7 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>FlowOwl — AI Coach</title>
-<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js" type="text/javascript"></script>
+<script
+  crossorigin="anonymous"
+  data-clerk-publishable-key="pk_live_Y2xlcmsuZmxvd3NwYWNlZm9jdXMuY29tJA"
+  src="https://clerk.flowspacefocus.com/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  type="text/javascript"
+></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -1670,28 +1675,41 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <script>
 // ── Clerk boot ────────────────────────────────────────────────────────────────
-const CLERK_KEY = 'pk_live_Y2xlcmsuZmxvd3NwYWNlZm9jdXMuY29tJA';
-let clerkInstance = null;
-let clerkToken    = null;
+// Uses Clerk FAPI CDN with data-clerk-publishable-key — no `new Clerk()` needed.
+// window.Clerk is auto-instantiated by the script tag above.
+let clerkToken = null;
 
 const gate    = () => document.getElementById('clerkGate');
 const proGate = () => document.getElementById('proGate');
 
+function showSignInBtn(label) {
+  const btn = document.getElementById('signInBtn');
+  if (btn) btn.textContent = label || 'Sign in';
+}
+
 async function handleSignIn() {
-  if (clerkInstance) {
-    await clerkInstance.redirectToSignIn({ redirectUrl: window.location.href });
+  try {
+    await window.Clerk.redirectToSignIn({ redirectUrl: window.location.href });
+  } catch (e) {
+    console.error('[SignIn redirect]', e);
+    showSignInBtn('Retry sign in');
   }
 }
 
 async function checkUser() {
-  const user = clerkInstance.user;
+  const user = window.Clerk.user;
   if (!user) {
     gate().style.display    = 'flex';
     proGate().style.display = 'none';
     return;
   }
 
-  clerkToken = await clerkInstance.session.getToken();
+  try {
+    clerkToken = await window.Clerk.session.getToken();
+  } catch (e) {
+    console.error('[Token error]', e);
+    return;
+  }
 
   try {
     const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${clerkToken}` } });
@@ -1703,23 +1721,23 @@ async function checkUser() {
       return;
     }
 
-    // All good — hide gates
+    // All good — hide gates, show app
     gate().style.display    = 'none';
     proGate().style.display = 'none';
 
-    // Show user avatar
+    // Show user avatar in header
     if (data.imageUrl && !document.getElementById('userAvatar')) {
       const avatar = document.createElement('img');
       avatar.id = 'userAvatar';
       avatar.src = data.imageUrl;
       avatar.style.cssText = 'width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;flex-shrink:0;';
       avatar.title = `${data.firstName || ''} ${data.lastName || ''}`.trim();
-      avatar.onclick = () => clerkInstance.openUserProfile();
+      avatar.onclick = () => window.Clerk.openUserProfile();
       document.querySelector('.app-header').appendChild(avatar);
     }
   } catch (e) {
-    console.error('[Auth check]', e);
-    // On API error let user through (fail open)
+    console.error('[/api/me error]', e);
+    // Network error — let them in rather than hard-blocking
     gate().style.display    = 'none';
     proGate().style.display = 'none';
   }
@@ -1727,22 +1745,22 @@ async function checkUser() {
 
 async function initClerk() {
   try {
-    clerkInstance = new window.Clerk(CLERK_KEY);
-    await clerkInstance.load();
-    clerkInstance.addListener(() => checkUser());
+    if (!window.Clerk) throw new Error('Clerk script did not load');
+    await window.Clerk.load();
+    window.Clerk.addListener(() => checkUser());
     await checkUser();
-    window.__clerkSignOut = () => clerkInstance.signOut().then(() => checkUser());
+    window.__clerkSignOut = () => window.Clerk.signOut().then(() => checkUser());
   } catch (e) {
-    console.error('[Clerk init]', e);
-    // If Clerk fails to load, hide gate and let user through
-    gate().style.display    = 'none';
-    proGate().style.display = 'none';
+    console.error('[Clerk init error]', e);
+    // Show error state on the sign-in button instead of hiding the gate
+    showSignInBtn('Auth unavailable — reload');
   }
 }
 
+// Fire after all scripts (including the Clerk script in <head>) are ready
 document.addEventListener('DOMContentLoaded', initClerk);
 
-// ── Attach token to all /api/ calls ──────────────────────────────────────────
+// ── Attach Clerk token to every /api/ request ─────────────────────────────────
 const _origFetch = window.fetch;
 window.fetch = function(url, opts = {}) {
   if (typeof url === 'string' && url.startsWith('/api/') && clerkToken) {
