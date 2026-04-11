@@ -637,7 +637,7 @@ body::after {
 
   <!-- Header -->
   <header class="app-header">
-    <a href="flowspace-jules-ui.html" class="back-link">← Home</a>
+    <a href="/" class="back-link">← Home</a>
     <div class="header-divider"></div>
     <div class="header-brand">
       <span class="header-brand-dot"></span>
@@ -1801,11 +1801,20 @@ async function initClerk() {
 // Fire after all scripts (including the Clerk script in <head>) are ready
 document.addEventListener('DOMContentLoaded', initClerk);
 
-// ── Attach Clerk token to every /api/ request ─────────────────────────────────
+// ── Attach a fresh Clerk token to every /api/ request ────────────────────────
+// Always calls getToken() instead of reusing a cached value — Clerk returns
+// a cached token if still valid and silently refreshes it when near expiry.
 const _origFetch = window.fetch;
-window.fetch = function(url, opts = {}) {
-  if (typeof url === 'string' && url.startsWith('/api/') && clerkToken) {
-    opts.headers = { ...(opts.headers || {}), Authorization: `Bearer ${clerkToken}` };
+window.fetch = async function(url, opts = {}) {
+  if (typeof url === 'string' && url.startsWith('/api/')) {
+    try {
+      if (window.Clerk?.session) {
+        clerkToken = await window.Clerk.session.getToken();
+      }
+    } catch (_) { /* session may not exist yet */ }
+    if (clerkToken) {
+      opts = { ...opts, headers: { ...(opts.headers || {}), Authorization: `Bearer ${clerkToken}` } };
+    }
   }
   return _origFetch(url, opts);
 };
