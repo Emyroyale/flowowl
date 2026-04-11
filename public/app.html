@@ -8,7 +8,7 @@
   async
   crossorigin="anonymous"
   data-clerk-publishable-key="pk_live_Y2xlcmsuZmxvd3NwYWNlZm9jdXMuY29tJA"
-  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  src="https://clerk.flowspacefocus.com/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
   type="text/javascript"
 ></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1674,9 +1674,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // ── Clerk boot ────────────────────────────────────────────────────────────────
 let clerkToken = null;
 
-window.addEventListener('load', async () => {
-  if (!window.Clerk) return; // Clerk script not loaded
-
+async function initClerk() {
   await window.Clerk.load();
 
   const gate    = document.getElementById('clerkGate');
@@ -1733,7 +1731,10 @@ window.addEventListener('load', async () => {
 
   // Sign-out helper for pro gate
   window.__clerkSignOut = () => window.Clerk.signOut().then(() => checkUser());
-});
+}
+
+// Use __onClerkLoaded for reliable init (fires when Clerk script is ready)
+window.__onClerkLoaded = initClerk;
 
 // ── Attach Clerk token to all /api/ fetch calls ───────────────────────────────
 const _origFetch = window.fetch;
