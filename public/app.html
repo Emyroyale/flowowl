@@ -1698,14 +1698,48 @@ async function handleSignIn() {
 
 function showUserAvatar(user) {
   if (document.getElementById('userAvatar')) return;
+  const header = document.querySelector('.app-header');
+  if (!header) return;
+
+  // Avatar image
   const avatar = document.createElement('img');
   avatar.id = 'userAvatar';
   avatar.src = user.imageUrl || '';
-  avatar.style.cssText = 'width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;flex-shrink:0;';
-  avatar.title = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  avatar.style.cssText = 'width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;flex-shrink:0;border:2px solid transparent;transition:border-color .2s;';
+  avatar.title = 'Account';
+  avatar.onmouseenter = () => avatar.style.borderColor = 'rgba(124,77,255,.6)';
+  avatar.onmouseleave = () => { avatar.style.borderColor = 'transparent'; };
+
+  // Sign-out button next to avatar
+  const signOutBtn = document.createElement('button');
+  signOutBtn.id = 'signOutBtn';
+  signOutBtn.textContent = 'Sign out';
+  signOutBtn.style.cssText = `
+    background: transparent;
+    border: 1px solid rgba(124,77,255,.25);
+    color: rgba(188,163,255,.55);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color .2s, color .2s;
+  `;
+  signOutBtn.onmouseenter = () => {
+    signOutBtn.style.borderColor = 'rgba(124,77,255,.6)';
+    signOutBtn.style.color = 'rgba(188,163,255,.9)';
+  };
+  signOutBtn.onmouseleave = () => {
+    signOutBtn.style.borderColor = 'rgba(124,77,255,.25)';
+    signOutBtn.style.color = 'rgba(188,163,255,.55)';
+  };
+  signOutBtn.onclick = () => window.__clerkSignOut && window.__clerkSignOut();
+
   avatar.onclick = () => window.Clerk.openUserProfile();
-  const header = document.querySelector('.app-header');
-  if (header) header.appendChild(avatar);
+
+  header.appendChild(avatar);
+  header.appendChild(signOutBtn);
 }
 
 async function checkUser() {
