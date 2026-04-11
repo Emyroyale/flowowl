@@ -4,13 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>FlowOwl — AI Coach</title>
-<script
-  async
-  crossorigin="anonymous"
-  data-clerk-publishable-key="pk_live_Y2xlcmsuZmxvd3NwYWNlZm9jdXMuY29tJA"
-  src="https://clerk.flowspacefocus.com/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-  type="text/javascript"
-></script>
+<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js" type="text/javascript"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -1646,7 +1640,7 @@ window.addEventListener('DOMContentLoaded', () => {
   <img src="/owlface.png" style="width:90px;filter:drop-shadow(0 0 28px rgba(120,70,255,.8));" onerror="this.style.display='none'" />
   <div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:#fff;">FlowOwl</div>
   <div style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(200,180,255,.6);margin-bottom:8px;">Sign in to access your AI coach</div>
-  <button onclick="window.Clerk && window.Clerk.redirectToSignIn({ redirectUrl: window.location.href })" style="
+  <button id="signInBtn" onclick="handleSignIn()" style="
     background:#7c3aed;color:#fff;padding:12px 32px;border-radius:999px;
     font-family:'Space Mono',monospace;font-size:13px;font-weight:700;
     border:none;cursor:pointer;margin-top:8px;
@@ -1676,70 +1670,79 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <script>
 // ── Clerk boot ────────────────────────────────────────────────────────────────
-let clerkToken = null;
+const CLERK_KEY = 'pk_live_Y2xlcmsuZmxvd3NwYWNlZm9jdXMuY29tJA';
+let clerkInstance = null;
+let clerkToken    = null;
 
-async function initClerk() {
-  await window.Clerk.load();
+const gate    = () => document.getElementById('clerkGate');
+const proGate = () => document.getElementById('proGate');
 
-  const gate    = document.getElementById('clerkGate');
-  const proGate = document.getElementById('proGate');
+async function handleSignIn() {
+  if (clerkInstance) {
+    await clerkInstance.redirectToSignIn({ redirectUrl: window.location.href });
+  }
+}
 
-  async function checkUser() {
-    const user = window.Clerk.user;
+async function checkUser() {
+  const user = clerkInstance.user;
+  if (!user) {
+    gate().style.display    = 'flex';
+    proGate().style.display = 'none';
+    return;
+  }
 
-    if (!user) {
-      // Not signed in — redirect to Clerk hosted sign-in
-      gate.style.display = 'flex';
-      proGate.style.display = 'none';
-      await window.Clerk.redirectToSignIn({
-        redirectUrl: window.location.href,
-      });
+  clerkToken = await clerkInstance.session.getToken();
+
+  try {
+    const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${clerkToken}` } });
+    const data = await res.json();
+
+    if (!data.isPro) {
+      gate().style.display    = 'none';
+      proGate().style.display = 'flex';
       return;
     }
 
-    // Signed in — get session token
-    clerkToken = await window.Clerk.session.getToken();
+    // All good — hide gates
+    gate().style.display    = 'none';
+    proGate().style.display = 'none';
 
-    // Check pro status via /api/me
-    try {
-      const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${clerkToken}` } });
-      const data = await res.json();
-
-      if (!data.isPro) {
-        gate.style.display = 'none';
-        proGate.style.display = 'flex';
-        return;
-      }
-
-      // All good — hide gates, show app
-      gate.style.display    = 'none';
-      proGate.style.display = 'none';
-
-      // Show user avatar in header if available
-      if (data.imageUrl) {
-        const avatar = document.createElement('img');
-        avatar.src = data.imageUrl;
-        avatar.style.cssText = 'width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;flex-shrink:0;';
-        avatar.title = `${data.firstName || ''} ${data.lastName || ''}`.trim();
-        avatar.onclick = () => window.Clerk.openUserProfile();
-        document.querySelector('.app-header').appendChild(avatar);
-      }
-    } catch (e) {
-      console.error('[Auth check]', e);
+    // Show user avatar
+    if (data.imageUrl && !document.getElementById('userAvatar')) {
+      const avatar = document.createElement('img');
+      avatar.id = 'userAvatar';
+      avatar.src = data.imageUrl;
+      avatar.style.cssText = 'width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;flex-shrink:0;';
+      avatar.title = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+      avatar.onclick = () => clerkInstance.openUserProfile();
+      document.querySelector('.app-header').appendChild(avatar);
     }
+  } catch (e) {
+    console.error('[Auth check]', e);
+    // On API error let user through (fail open)
+    gate().style.display    = 'none';
+    proGate().style.display = 'none';
   }
-
-  window.Clerk.addListener(({ user }) => checkUser());
-  await checkUser();
-
-  // Sign-out helper for pro gate
-  window.__clerkSignOut = () => window.Clerk.signOut().then(() => checkUser());
 }
 
-// Use __onClerkLoaded for reliable init (fires when Clerk script is ready)
-window.__onClerkLoaded = initClerk;
+async function initClerk() {
+  try {
+    clerkInstance = new window.Clerk(CLERK_KEY);
+    await clerkInstance.load();
+    clerkInstance.addListener(() => checkUser());
+    await checkUser();
+    window.__clerkSignOut = () => clerkInstance.signOut().then(() => checkUser());
+  } catch (e) {
+    console.error('[Clerk init]', e);
+    // If Clerk fails to load, hide gate and let user through
+    gate().style.display    = 'none';
+    proGate().style.display = 'none';
+  }
+}
 
-// ── Attach Clerk token to all /api/ fetch calls ───────────────────────────────
+document.addEventListener('DOMContentLoaded', initClerk);
+
+// ── Attach token to all /api/ calls ──────────────────────────────────────────
 const _origFetch = window.fetch;
 window.fetch = function(url, opts = {}) {
   if (typeof url === 'string' && url.startsWith('/api/') && clerkToken) {
