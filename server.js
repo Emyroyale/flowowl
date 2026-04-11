@@ -23,16 +23,27 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(express.static(path.join(__dirname)));
 }
 
+// Allowed origins for Clerk JWT azp claim validation
+const AUTHORIZED_PARTIES = [
+  'https://flowspacefocus.com',
+  'http://flowspacefocus.com',
+  'http://localhost:3000',
+  'http://localhost:3001',
+];
+
 // ── Auth middleware — verifies Clerk session token ────────────────────────────
 async function requireAuth(req, res, next) {
   try {
-    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
     if (!token) return res.status(401).json({ error: 'Not signed in.' });
 
-    const payload = await clerk.verifyToken(token);
+    const payload = await clerk.verifyToken(token, {
+      authorizedParties: AUTHORIZED_PARTIES,
+    });
     req.userId = payload.sub;
     next();
   } catch (err) {
+    console.error('[Auth error]', err.message);
     return res.status(401).json({ error: 'Invalid session. Please sign in again.' });
   }
 }
