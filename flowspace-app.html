@@ -631,19 +631,7 @@ body::after {
 <body>
 
 <!-- ─── Pro gate overlay (shown for non-pro users) ────────────────────────── -->
-<div class="pro-gate" id="proGate">
-  <div class="pro-gate-box">
-    <div class="pro-gate-icon">🦉</div>
-    <div class="pro-gate-title">FlowOwl is a Pro feature</div>
-    <div class="pro-gate-desc">
-      Your AI accountability coach — checks in before, during, and after every session.
-      Catches you when you drift. Tells you the truth.<br><br>
-      Available on FlowSpaceFocus Pro.
-    </div>
-    <button class="btn-upgrade" onclick="dismissGate()">Unlock FlowOwl — $9/month</button>
-    <a class="btn-demo-link" onclick="dismissGate()">Continue as Pro demo →</a>
-  </div>
-</div>
+<!-- Pro gate replaced by Clerk auth below -->
 
 <!-- ─── App shell ─────────────────────────────────────────────────────────── -->
 <div class="app-shell">
@@ -942,13 +930,7 @@ let beforeReady = false;  // true after at least one exchange in Before
 // ═══════════════════════════════════════════════════════════════════════════
 // PRO GATE
 // ═══════════════════════════════════════════════════════════════════════════
-function dismissGate() {
-  document.getElementById('proGate').classList.remove('visible');
-}
-// Show gate on load (simulate — in production check real subscription)
-window.addEventListener('load', () => {
-  document.getElementById('proGate').classList.add('visible');
-});
+// Auth gate handled by Clerk — see bottom of file
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TABS
