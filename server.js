@@ -1,19 +1,87 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
-const express  = require('express');
-const path     = require('path');
+const express   = require('express');
+const path      = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
-const { Pool } = require('pg');
+const { Pool }  = require('pg');
+const { createClerkClient } = require('@clerk/backend');
+const Stripe    = require('stripe');
+
+const app    = express();
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const clerk  = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 
-const app    = express();
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
+
+// ── Auth middleware — verifies Clerk session token ────────────────────────────
+async function requireAuth(req, res, next) {
+  try {
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: 'Not signed in.' });
+
+    const payload = await clerk.verifyToken(token);
+    req.userId = payload.sub;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid session. Please sign in again.' });
+  }
+}
+
+// ── Paid user check ───────────────────────────────────────────────────────────
+async function requirePro(req, res, next) {
+  const userId = req.userId;
+
+  // Check NEXT_PUBLIC_PAID_USER_IDS list first (fast)
+  const paidIds = (process.env.NEXT_PUBLIC_PAID_USER_IDS || '').split(',').map(s => s.trim());
+  if (paidIds.includes(userId)) return next();
+
+  // Otherwise check Stripe for active subscription
+  try {
+    const user = await clerk.users.getUser(userId);
+    const email = user.emailAddresses?.[0]?.emailAddress;
+    if (!email) return res.status(403).json({ error: 'pro_required' });
+
+    const customers = await stripe.customers.list({ email, limit: 1 });
+    if (!customers.data.length) return res.status(403).json({ error: 'pro_required' });
+
+    const subs = await stripe.subscriptions.list({
+      customer: customers.data[0].id,
+      status: 'active',
+      limit: 1,
+    });
+
+    if (!subs.data.length) return res.status(403).json({ error: 'pro_required' });
+    next();
+  } catch (err) {
+    console.error('[Pro check error]', err.message);
+    return res.status(403).json({ error: 'pro_required' });
+  }
+}
+
+// ── GET /api/me — return current user info ────────────────────────────────────
+app.get('/api/me', requireAuth, async (req, res) => {
+  try {
+    const user = await clerk.users.getUser(req.userId);
+    const paidIds = (process.env.NEXT_PUBLIC_PAID_USER_IDS || '').split(',').map(s => s.trim());
+    const isPro = paidIds.includes(req.userId);
+    res.json({
+      id:        req.userId,
+      firstName: user.firstName,
+      lastName:  user.lastName,
+      email:     user.emailAddresses?.[0]?.emailAddress,
+      imageUrl:  user.imageUrl,
+      isPro,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── FlowOwl system prompt (stage-aware) ──────────────────────────────────────
 function buildSystemPrompt(stage, goal) {
@@ -42,14 +110,13 @@ The user's session goal: "${goal || 'not specified yet'}".`;
 }
 
 // ── POST /api/chat ────────────────────────────────────────────────────────────
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', requireAuth, requirePro, async (req, res) => {
   const { messages = [], stage = 'before', goal = '' } = req.body;
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set in environment.' });
   }
 
-  // Validate messages array
   const validMessages = messages.filter(
     m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'
   );
@@ -72,38 +139,37 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // ── GET /api/stats ────────────────────────────────────────────────────────────
-app.get('/api/stats', async (_req, res) => {
+app.get('/api/stats', requireAuth, async (req, res) => {
+  const userId = req.userId;
   try {
-    // All-time totals
     const totals = await db.query(`
       SELECT
-        COUNT(*)                                          AS total_sessions,
-        COALESCE(SUM("durationMins"), 0)                 AS total_mins,
-        COUNT(CASE WHEN completed THEN 1 END)            AS completed_sessions
-      FROM "Session"
-    `);
+        COUNT(*)                                       AS total_sessions,
+        COALESCE(SUM("durationMins"), 0)              AS total_mins,
+        COUNT(CASE WHEN completed THEN 1 END)         AS completed_sessions
+      FROM "Session" WHERE "userId" = $1
+    `, [userId]);
 
-    // This week (Mon–now)
     const weekly = await db.query(`
       SELECT
-        COUNT(*)                                          AS week_sessions,
-        COALESCE(SUM("durationMins"), 0)                 AS week_mins
+        COUNT(*)                                       AS week_sessions,
+        COALESCE(SUM("durationMins"), 0)              AS week_mins
       FROM "Session"
-      WHERE "createdAt" >= date_trunc('week', NOW())
-    `);
+      WHERE "userId" = $1 AND "createdAt" >= date_trunc('week', NOW())
+    `, [userId]);
 
-    // Recent 8 sessions
     const recent = await db.query(`
       SELECT id, "vibeId", "durationMins", "taskName", completed, "createdAt"
       FROM "Session"
+      WHERE "userId" = $1
       ORDER BY "createdAt" DESC
       LIMIT 8
-    `);
+    `, [userId]);
 
     res.json({
-      allTime: totals.rows[0],
+      allTime:  totals.rows[0],
       thisWeek: weekly.rows[0],
-      recent: recent.rows,
+      recent:   recent.rows,
     });
   } catch (err) {
     console.error('[Stats error]', err.message);
@@ -111,7 +177,7 @@ app.get('/api/stats', async (_req, res) => {
   }
 });
 
-// ── Health check ─────────────────────────────────────────────────────────────
+// ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, keySet: !!process.env.ANTHROPIC_API_KEY });
 });
