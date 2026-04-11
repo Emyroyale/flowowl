@@ -41,13 +41,17 @@ async function requireAuth(req, res, next) {
 async function requirePro(req, res, next) {
   const userId = req.userId;
 
-  // Check NEXT_PUBLIC_PAID_USER_IDS list first (fast)
+  // 1. Hardcoded paid user IDs list
   const paidIds = (process.env.NEXT_PUBLIC_PAID_USER_IDS || '').split(',').map(s => s.trim());
   if (paidIds.includes(userId)) return next();
 
-  // Otherwise check Stripe for active subscription
   try {
     const user = await clerk.users.getUser(userId);
+
+    // 2. Clerk metadata: { isPro: true }
+    if (user.privateMetadata?.isPro || user.publicMetadata?.isPro) return next();
+
+    // 3. Stripe active subscription
     const email = user.emailAddresses?.[0]?.emailAddress;
     if (!email) return res.status(403).json({ error: 'pro_required' });
 
@@ -72,10 +76,17 @@ async function requirePro(req, res, next) {
 app.get('/api/me', requireAuth, async (req, res) => {
   try {
     const user = await clerk.users.getUser(req.userId);
+
+    // 1. Hardcoded paid user IDs (env var)
     const paidIds = (process.env.NEXT_PUBLIC_PAID_USER_IDS || '').split(',').map(s => s.trim());
     let isPro = paidIds.includes(req.userId);
 
-    // If not in the hardcoded list, check Stripe for an active subscription
+    // 2. Clerk private or public metadata: { isPro: true }
+    if (!isPro) {
+      isPro = !!(user.privateMetadata?.isPro || user.publicMetadata?.isPro);
+    }
+
+    // 3. Stripe active subscription fallback
     if (!isPro) {
       try {
         const email = user.emailAddresses?.[0]?.emailAddress;
