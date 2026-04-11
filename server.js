@@ -73,7 +73,28 @@ app.get('/api/me', requireAuth, async (req, res) => {
   try {
     const user = await clerk.users.getUser(req.userId);
     const paidIds = (process.env.NEXT_PUBLIC_PAID_USER_IDS || '').split(',').map(s => s.trim());
-    const isPro = paidIds.includes(req.userId);
+    let isPro = paidIds.includes(req.userId);
+
+    // If not in the hardcoded list, check Stripe for an active subscription
+    if (!isPro) {
+      try {
+        const email = user.emailAddresses?.[0]?.emailAddress;
+        if (email) {
+          const customers = await stripe.customers.list({ email, limit: 1 });
+          if (customers.data.length) {
+            const subs = await stripe.subscriptions.list({
+              customer: customers.data[0].id,
+              status: 'active',
+              limit: 1,
+            });
+            isPro = subs.data.length > 0;
+          }
+        }
+      } catch (stripeErr) {
+        console.error('[Stripe check in /api/me]', stripeErr.message);
+      }
+    }
+
     res.json({
       id:        req.userId,
       firstName: user.firstName,
