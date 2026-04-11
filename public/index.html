@@ -1037,8 +1037,8 @@
     <h1>You don't have a focus problem.<em>You have too many things pulling you away.</em></h1>
     <p>FlowSpaceFocus helps you stay. Finish. And feel in control again.<br><span style="opacity:.6;">Built for minds that start strong but struggle to stay locked in. No noise. No guilt. Just progress.</span></p>
     <div class="cta-row">
-      <button class="btn-cta">Start focusing for free &rarr;</button>
-      <button class="btn-alt">No pressure. Just one session.</button>
+      <button class="btn-cta" onclick="window.location.href='/app'">Start focusing for free &rarr;</button>
+      <button class="btn-alt" onclick="window.location.href='/app'">No pressure. Just one session.</button>
     </div>
   </div>
 
@@ -1053,7 +1053,7 @@
         <div class="jstep-num n1">1</div>
         <h3>Get into the zone faster than your distractions.</h3>
         <p>Your brain needs the right entry point. Pick a sound that matches your energy so you don't fight yourself just to start.</p>
-        <a>Browse all 8 playlists</a>
+        <a href="#playlists" style="cursor:pointer;">Browse all 8 playlists</a>
       </div>
       <div class="jstep-ui">
         <div class="jui-bar">
@@ -1111,7 +1111,7 @@
         <div class="jstep-num n3">3</div>
         <h3>You stop lying to yourself.</h3>
         <p>After each session, your coach asks one simple question: "What pulled you away?" No shame. No pressure. Just awareness. Because you can't fix what you don't see.</p>
-        <a>Unlock with Pro</a>
+        <a href="#pricing" style="cursor:pointer;">Unlock with Pro</a>
       </div>
       <div class="jstep-ui">
         <div class="jui-bar">
@@ -1147,7 +1147,7 @@
         <div class="jstep-num n4">4</div>
         <h3>Finally understand your focus.</h3>
         <p>You start to notice patterns. When you drift. What pulls you out. When you perform best. This is where things change. Because now, you're not guessing anymore.</p>
-        <a>Unlock with Pro</a>
+        <a href="#pricing" style="cursor:pointer;">Unlock with Pro</a>
       </div>
       <div class="jstep-ui">
         <div class="jui-bar">
@@ -1190,7 +1190,7 @@
   </div>
 
   <!-- ═══ PLAYLIST SHOWCASE ═══ -->
-  <div class="playlist-section">
+  <div class="playlist-section" id="playlists">
     <div style="margin-bottom:20px;">
       <div class="section-label" style="margin-bottom:8px;">// Focus playlists</div>
       <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;margin-bottom:6px;">Stop forcing focus. Use momentum.</div>
@@ -1383,7 +1383,7 @@
   </div>
 
   <!-- ═══ PRICING ═══ -->
-  <div class="pricing-section">
+  <div class="pricing-section" id="pricing">
     <div class="pricing-head">
       <h2>How much is staying focused worth to you?</h2>
       <p>Start free. Upgrade when you're ready to stop starting over.</p>
@@ -1410,7 +1410,7 @@
           <li>No session history</li>
           <li>No AI coach</li>
         </ul>
-        <button class="price-cta free">Start free</button>
+        <button class="price-cta free" onclick="window.location.href='/app'">Start free</button>
         <div class="price-footer">No credit card required</div>
       </div>
 
@@ -1434,7 +1434,7 @@
           <li>All 8 genre playlists</li>
           <li>Goal tracking</li>
         </ul>
-        <button class="price-cta paid">Unlock full focus &mdash; $9/month</button>
+        <button class="price-cta paid" onclick="window.location.href='/app'">Unlock full focus &mdash; $9/month</button>
         <div class="price-footer">Cancel anytime</div>
       </div>
 
