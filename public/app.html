@@ -1696,6 +1696,18 @@ async function handleSignIn() {
   }
 }
 
+function showUserAvatar(user) {
+  if (document.getElementById('userAvatar')) return;
+  const avatar = document.createElement('img');
+  avatar.id = 'userAvatar';
+  avatar.src = user.imageUrl || '';
+  avatar.style.cssText = 'width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;flex-shrink:0;';
+  avatar.title = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  avatar.onclick = () => window.Clerk.openUserProfile();
+  const header = document.querySelector('.app-header');
+  if (header) header.appendChild(avatar);
+}
+
 async function checkUser() {
   const user = window.Clerk.user;
   if (!user) {
@@ -1704,14 +1716,20 @@ async function checkUser() {
     return;
   }
 
-  try {
-    clerkToken = await window.Clerk.session.getToken();
-  } catch (e) {
-    console.error('[Token error]', e);
+  // ── Fast path: public metadata is available directly in the browser ──────────
+  // Set {"isPro": true} in Clerk Dashboard → Users → your user → Public Metadata
+  if (user.publicMetadata?.isPro) {
+    gate().style.display    = 'none';
+    proGate().style.display = 'none';
+    showUserAvatar(user);
+    // Still get a token for API calls
+    try { clerkToken = await window.Clerk.session.getToken(); } catch (_) {}
     return;
   }
 
+  // ── Slower path: ask server (checks private metadata + Stripe) ───────────────
   try {
+    clerkToken = await window.Clerk.session.getToken();
     const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${clerkToken}` } });
     const data = await res.json();
 
@@ -1721,23 +1739,12 @@ async function checkUser() {
       return;
     }
 
-    // All good — hide gates, show app
     gate().style.display    = 'none';
     proGate().style.display = 'none';
-
-    // Show user avatar in header
-    if (data.imageUrl && !document.getElementById('userAvatar')) {
-      const avatar = document.createElement('img');
-      avatar.id = 'userAvatar';
-      avatar.src = data.imageUrl;
-      avatar.style.cssText = 'width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;flex-shrink:0;';
-      avatar.title = `${data.firstName || ''} ${data.lastName || ''}`.trim();
-      avatar.onclick = () => window.Clerk.openUserProfile();
-      document.querySelector('.app-header').appendChild(avatar);
-    }
+    showUserAvatar(user);
   } catch (e) {
     console.error('[/api/me error]', e);
-    // Network error — let them in rather than hard-blocking
+    // Network error — fail open rather than hard-block a paying user
     gate().style.display    = 'none';
     proGate().style.display = 'none';
   }
