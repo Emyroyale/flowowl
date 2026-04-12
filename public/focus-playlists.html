@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus Playlists for ADHD-Friendly Work Sessions | FlowSpaceFocus</title>
+  <meta name="description" content="FlowSpaceFocus includes 8 curated focus playlists designed for different energy states and task types — from Binaural Beats for deep work to Afrobeat for momentum-building." />
+  <link rel="canonical" href="https://flowspacefocus.com/focus-playlists" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080614;
+      color: #ede8ff;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: inherit; }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .hero {
+      padding: 80px 24px 64px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #7c4dff;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -.5px;
+      color: #ede8ff;
+      margin-bottom: 24px;
+    }
+    .intro {
+      font-size: 17px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.75;
+      max-width: 660px;
+    }
+    /* Playlist grid */
+    .playlist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 56px 0;
+    }
+    .playlist-card {
+      background: rgba(124,77,255,.04);
+      border: 1px solid rgba(110,60,220,.18);
+      border-radius: 16px;
+      padding: 24px 24px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      transition: border-color .2s, background .2s;
+    }
+    .playlist-card:hover {
+      border-color: rgba(124,77,255,.35);
+      background: rgba(124,77,255,.07);
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .card-name {
+      font-family: 'Inter', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: #ede8ff;
+      letter-spacing: -.2px;
+    }
+    .free-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: rgba(124,77,255,.9);
+      background: rgba(124,77,255,.12);
+      border: 1px solid rgba(124,77,255,.25);
+      border-radius: 999px;
+      padding: 3px 9px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .meta-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      border-radius: 6px;
+      padding: 3px 9px;
+    }
+    .meta-tag.best-for {
+      color: rgba(188,163,255,.6);
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(110,60,220,.15);
+    }
+    .meta-tag.energy {
+      color: rgba(124,77,255,.9);
+      background: rgba(124,77,255,.08);
+      border: 1px solid rgba(124,77,255,.18);
+    }
+    .card-desc {
+      font-size: 13.5px;
+      color: rgba(188,163,255,.6);
+      line-height: 1.65;
+    }
+    /* Bottom section */
+    .bottom-section {
+      border-top: 1px solid rgba(110,60,220,.18);
+      padding: 48px 0;
+      text-align: center;
+    }
+    .free-note-banner {
+      background: rgba(124,77,255,.07);
+      border: 1px solid rgba(124,77,255,.2);
+      border-radius: 14px;
+      padding: 24px 32px;
+      display: inline-block;
+      max-width: 520px;
+      margin: 0 auto 40px;
+    }
+    .free-note-banner .title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ede8ff;
+      margin-bottom: 8px;
+    }
+    .free-note-banner .body {
+      font-size: 14px;
+      color: rgba(188,163,255,.6);
+      line-height: 1.6;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, rgba(124,77,255,.12) 0%, rgba(124,77,255,.06) 100%);
+      border: 1px solid rgba(124,77,255,.35);
+      border-radius: 20px;
+      padding: 48px 32px;
+    }
+    .cta-box h2 {
+      font-family: 'Inter', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #ede8ff;
+      margin-bottom: 12px;
+      letter-spacing: -.2px;
+    }
+    .cta-box p {
+      font-size: 15px;
+      color: rgba(188,163,255,.72);
+      margin-bottom: 28px;
+    }
+    .btn-primary {
+      display: inline-block;
+      background: #7c4dff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 14px 32px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .sub-note {
+      font-size: 12px;
+      color: rgba(188,163,255,.4);
+      margin-top: 14px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<nav style="position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:16px 52px;border-bottom:1px solid rgba(110,60,220,.18);backdrop-filter:blur(12px);">
+  <a href="/" style="font-size:17px;font-weight:700;letter-spacing:-.3px;color:#ede8ff;text-decoration:none;font-family:'JetBrains Mono',monospace;">FlowSpaceFocus</a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="/pricing" style="font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;font-family:'Inter',sans-serif;">Pricing</a>
+    <a href="/app" style="font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;font-family:'Inter',sans-serif;">Sign in</a>
+    <button onclick="window.location.href='/app?signup=true'" style="background:#7c4dff;color:#fff;border:none;border-radius:999px;padding:9px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Sign Up Free</button>
+  </div>
+</nav>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">Focus Playlists</div>
+    <h1>Focus Playlists Designed for How Your Brain Actually Works</h1>
+    <p class="intro">The right sound can be the difference between a drifting session and a locked-in one. FlowSpaceFocus includes 8 curated playlists, each designed for a specific energy state or task type. They are not background music. They are tools.</p>
+  </div>
+
+  <div class="container">
+    <div class="playlist-grid">
+
+      <div class="playlist-card">
+        <div class="card-header">
+          <div class="card-name">Afrobeat</div>
+          <span class="free-badge">Free</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-tag best-for">Momentum · Creative work</span>
+          <span class="meta-tag energy">High energy</span>
+        </div>
+        <div class="card-desc">Rhythmic and energising. Use this when you need to move fast and stay in motion.</div>
+      </div>
+
+      <div class="playlist-card">
+        <div class="card-header">
+          <div class="card-name">Coastal</div>
+          <span class="free-badge">Free</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-tag best-for">Writing · Steady focus</span>
+          <span class="meta-tag energy">Calm</span>
+        </div>
+        <div class="card-desc">Relaxed and flowing. Best for work that needs sustained attention without tension.</div>
+      </div>
+
+      <div class="playlist-card">
+        <div class="card-header">
+          <div class="card-name">Kompa</div>
+          <span class="free-badge">Free</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-tag best-for">Creative · Repetitive work</span>
+          <span class="meta-tag energy">Medium</span>
+        </div>
+        <div class="card-desc">Smooth and groove-driven. Good for tasks that benefit from a steady rhythm.</div>
+      </div>
+
+      <div class="playlist-card">
+        <div class="card-header">
+          <div class="card-name">Study Flow</div>
+          <span class="free-badge">Free</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-tag best-for">Reading · Research · Learning</span>
+          <span class="meta-tag energy">Calm-focused</span>
+        </div>
+        <div class="card-desc">Clean and minimal. Designed to support concentration without distraction.</div>
+      </div>
+
+      <div class="playlist-card">
+        <div class="card-header">
+          <div class="card-name">Focus Classics</div>
+          <span class="free-badge">Free</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-tag best-for">Deep work · Analysis</span>
+          <span class="meta-tag energy">Structured</span>
+        </div>
+        <div class="card-desc">Classical and orchestral. Supports long sessions that require sustained mental effort.</div>
+      </div>
+
+      <div class="playlist-card">
+        <div class="card-header">
+          <div class="card-name">Energy Reset</div>
+          <span class="free-badge">Free</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-tag best-for">Getting unstuck · Re-entry</span>
+          <span class="meta-tag energy">Uplifting</span>
+        </div>
+        <div class="card-desc">Use this when your energy has dropped and you need a quick reset before diving back in.</div>
+      </div>
+
+      <div class="playlist-card">
+        <div class="card-header">
+          <div class="card-name">Binaural Beats</div>
+          <span class="free-badge">Free</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-tag best-for">Deep focus · Complex tasks</span>
+          <span class="meta-tag energy">Immersive</span>
+        </div>
+        <div class="card-desc">Uses layered audio frequencies to support sustained concentration. Best used with headphones.</div>
+      </div>
+
+      <div class="playlist-card">
+        <div class="card-header">
+          <div class="card-name">Brown Noise</div>
+          <span class="free-badge">Free</span>
+        </div>
+        <div class="card-meta">
+          <span class="meta-tag best-for">Blocking distractions · Open offices</span>
+          <span class="meta-tag energy">Neutral</span>
+        </div>
+        <div class="card-desc">A consistent ambient sound layer that masks background noise and reduces sensory distraction.</div>
+      </div>
+
+    </div>
+
+    <div class="bottom-section">
+      <div class="free-note-banner">
+        <div class="title">All playlists are available on the free plan.</div>
+        <div class="body">The AI coach and unlimited session lengths are Pro features. Everything else — including all 8 playlists — is free.</div>
+      </div>
+
+      <div class="cta-box">
+        <h2>Pick a sound. Start a session.</h2>
+        <p>No setup. No credit card. Your first session takes 30 seconds to begin.</p>
+        <a href="/app?signup=true" class="btn-primary">Start focusing free →</a>
+        <div class="sub-note">Free plan available. Upgrade to Pro for AI coaching.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer style="border-top:1px solid rgba(110,60,220,.18);padding:40px 52px;margin-top:80px;">
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px;margin-bottom:32px;">
+    <div style="max-width:260px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#ede8ff;margin-bottom:8px;">FlowSpaceFocus</div>
+      <div style="font-size:13px;color:rgba(188,163,255,.55);line-height:1.7;">Web-based AI focus app for distracted and ADHD-prone minds.</div>
+    </div>
+    <div style="display:flex;gap:48px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#ede8ff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;">Product</div>
+        <a href="/how-it-works" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">How it works</a>
+        <a href="/ai-accountability-coach" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">AI Coach</a>
+        <a href="/focus-playlists" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Focus Playlists</a>
+        <a href="/pricing" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Pricing</a>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#ede8ff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;">Learn</div>
+        <a href="/faq" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">FAQ</a>
+        <a href="/for-adhd-minds" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">For ADHD Minds</a>
+        <a href="https://blog.flowspacefocus.com" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Blog</a>
+      </div>
+    </div>
+  </div>
+  <div style="border-top:1px solid rgba(110,60,220,.18);padding-top:20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(140,110,200,.35);">© 2026 FlowSpaceFocus by Royale Automation. All rights reserved.</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(140,110,200,.28);">flowspacefocus.com</div>
+  </div>
+</footer>
+
+</body>
+</html>

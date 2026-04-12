@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Accountability Coach for Focus Sessions | FlowSpaceFocus</title>
+  <meta name="description" content="FlowOwl is the AI accountability coach inside FlowSpaceFocus. It prompts you before sessions, checks in at the halfway point, and debriefs you after — helping you define goals, notice drift, and build focus habits." />
+  <link rel="canonical" href="https://flowspacefocus.com/ai-accountability-coach" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "FlowSpaceFocus – FlowOwl AI Accountability Coach",
+    "applicationCategory": "ProductivityApplication",
+    "operatingSystem": "Web",
+    "url": "https://flowspacefocus.com/ai-accountability-coach",
+    "description": "FlowOwl is the AI accountability coach built into FlowSpaceFocus. It runs a structured coaching layer before, during, and after every focus session.",
+    "offers": {
+      "@type": "Offer",
+      "price": "9.00",
+      "priceCurrency": "USD",
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": "9.00",
+        "priceCurrency": "USD",
+        "billingDuration": "P1M"
+      }
+    }
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080614;
+      color: #ede8ff;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: inherit; }
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .hero {
+      padding: 80px 24px 64px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #7c4dff;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -.5px;
+      color: #ede8ff;
+      margin-bottom: 24px;
+    }
+    .intro {
+      font-size: 17px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.75;
+      max-width: 640px;
+    }
+    .section {
+      padding: 56px 0;
+      border-top: 1px solid rgba(110,60,220,.18);
+    }
+    h2 {
+      font-family: 'Inter', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #ede8ff;
+      margin-bottom: 20px;
+      letter-spacing: -.2px;
+    }
+    p {
+      font-size: 15px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+    p:last-child { margin-bottom: 0; }
+    ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    ul li {
+      font-size: 15px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.65;
+      padding-left: 20px;
+      position: relative;
+    }
+    ul li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: #7c4dff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ul li strong {
+      color: #ede8ff;
+      font-weight: 600;
+    }
+    /* Chat bubbles */
+    .chat {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+      background: rgba(124,77,255,.04);
+      border: 1px solid rgba(110,60,220,.18);
+      border-radius: 16px;
+      padding: 28px 28px;
+    }
+    .bubble-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .bubble-row.owl { justify-content: flex-start; }
+    .bubble-row.user { justify-content: flex-end; }
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(124,77,255,.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .bubble {
+      max-width: 72%;
+      padding: 11px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .bubble-row.owl .bubble {
+      background: rgba(124,77,255,.18);
+      color: #ede8ff;
+      border-bottom-left-radius: 4px;
+    }
+    .bubble-row.user .bubble {
+      background: rgba(255,255,255,.07);
+      color: rgba(188,163,255,.85);
+      border-bottom-right-radius: 4px;
+    }
+    /* CTA section */
+    .cta-section {
+      padding: 64px 0 0;
+      text-align: center;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, rgba(124,77,255,.12) 0%, rgba(124,77,255,.06) 100%);
+      border: 1px solid rgba(124,77,255,.35);
+      border-radius: 20px;
+      padding: 48px 32px;
+    }
+    .cta-box h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .cta-box p {
+      font-size: 15px;
+      margin-bottom: 28px;
+    }
+    .btn-primary {
+      display: inline-block;
+      background: #7c4dff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 14px 32px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .free-note {
+      font-size: 12px;
+      color: rgba(188,163,255,.4);
+      margin-top: 14px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<nav style="position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:16px 52px;border-bottom:1px solid rgba(110,60,220,.18);backdrop-filter:blur(12px);">
+  <a href="/" style="font-size:17px;font-weight:700;letter-spacing:-.3px;color:#ede8ff;text-decoration:none;font-family:'JetBrains Mono',monospace;">FlowSpaceFocus</a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="/pricing" style="font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;font-family:'Inter',sans-serif;">Pricing</a>
+    <a href="/app" style="font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;font-family:'Inter',sans-serif;">Sign in</a>
+    <button onclick="window.location.href='/app?signup=true'" style="background:#7c4dff;color:#fff;border:none;border-radius:999px;padding:9px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Sign Up Free</button>
+  </div>
+</nav>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">AI Accountability Coach</div>
+    <h1>The AI Accountability Coach That Keeps You Honest</h1>
+    <p class="intro">FlowOwl is the AI coach built into FlowSpaceFocus. It is not a chatbot. It is not a motivational quote generator. It is a structured coaching layer that runs before, during, and after every focus session to help you define goals, notice when you drift, and recover faster.</p>
+  </div>
+
+  <div class="container">
+
+    <div class="section">
+      <h2>What the AI coach does</h2>
+      <p>Most focus apps only track time. FlowSpaceFocus adds a coaching layer that talks to you. FlowOwl helps you commit to a specific goal before you start, checks in at the halfway point without interrupting your flow, and runs a short debrief when your session ends. Over time, it helps you identify which conditions produce your best work.</p>
+    </div>
+
+    <div class="section">
+      <h2>When FlowOwl speaks to you</h2>
+      <ul>
+        <li><strong>Before your session:</strong> FlowOwl asks you to name one specific thing you will finish. Vague goals are pushed back on. You leave the pre-session conversation with a concrete commitment.</li>
+        <li><strong>At the halfway point:</strong> A brief check-in. FlowOwl acknowledges your progress and sends you back to work immediately.</li>
+        <li><strong>After your session:</strong> A short debrief. FlowOwl asks how it went, what you finished, and what got in the way. This is where learning happens.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Example coach interactions</h2>
+      <div class="chat">
+        <div class="bubble-row owl">
+          <div class="avatar">🦉</div>
+          <div class="bubble">What's one specific thing you'll finish this session?</div>
+        </div>
+        <div class="bubble-row user">
+          <div class="bubble">Work on my presentation.</div>
+        </div>
+        <div class="bubble-row owl">
+          <div class="avatar">🦉</div>
+          <div class="bubble">That's too broad. What exactly will be done when you're finished?</div>
+        </div>
+        <div class="bubble-row user">
+          <div class="bubble">Finish slides 4 through 8 with speaker notes.</div>
+        </div>
+        <div class="bubble-row owl">
+          <div class="avatar">🦉</div>
+          <div class="bubble">Good. Start there. I'll check in at the halfway point.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>How it helps you recover from distraction</h2>
+      <p>When your attention slips, FlowOwl does not shame you. It asks what happened and helps you re-enter work faster. The goal is to shrink the gap between drift and recovery.</p>
+    </div>
+
+    <div class="section">
+      <h2>How it differs from a timer</h2>
+      <p>A timer counts down. FlowOwl coaches. It holds you to your stated goal, notices patterns across sessions, and gives you honest feedback about your focus habits without judgment.</p>
+    </div>
+
+    <div class="section">
+      <h2>Who benefits most</h2>
+      <ul>
+        <li>People who struggle with task initiation.</li>
+        <li>People who start sessions but drift after 10 minutes.</li>
+        <li>People who want accountability without having to explain themselves to another person.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Free vs Pro</h2>
+      <p>FlowOwl is a Pro feature. The free plan includes focus sessions and playlists. Upgrade to Pro to unlock the AI coach.</p>
+    </div>
+
+    <div class="cta-section">
+      <div class="cta-box">
+        <h2>Ready to work with an honest coach?</h2>
+        <p>Unlock FlowOwl and start sessions with purpose.</p>
+        <a href="/app?signup=true" class="btn-primary">Unlock FlowOwl with Pro →</a>
+        <div class="free-note">Pro is $9/month. Cancel anytime.</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer style="border-top:1px solid rgba(110,60,220,.18);padding:40px 52px;margin-top:80px;">
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px;margin-bottom:32px;">
+    <div style="max-width:260px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#ede8ff;margin-bottom:8px;">FlowSpaceFocus</div>
+      <div style="font-size:13px;color:rgba(188,163,255,.55);line-height:1.7;">Web-based AI focus app for distracted and ADHD-prone minds.</div>
+    </div>
+    <div style="display:flex;gap:48px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#ede8ff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;">Product</div>
+        <a href="/how-it-works" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">How it works</a>
+        <a href="/ai-accountability-coach" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">AI Coach</a>
+        <a href="/focus-playlists" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Focus Playlists</a>
+        <a href="/pricing" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Pricing</a>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#ede8ff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;">Learn</div>
+        <a href="/faq" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">FAQ</a>
+        <a href="/for-adhd-minds" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">For ADHD Minds</a>
+        <a href="https://blog.flowspacefocus.com" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Blog</a>
+      </div>
+    </div>
+  </div>
+  <div style="border-top:1px solid rgba(110,60,220,.18);padding-top:20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(140,110,200,.35);">© 2026 FlowSpaceFocus by Royale Automation. All rights reserved.</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(140,110,200,.28);">flowspacefocus.com</div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowSpaceFocus for ADHD-Prone Minds | AI Focus App</title>
+  <meta name="description" content="FlowSpaceFocus is designed for people who struggle with task initiation, attention drift, and distraction. It provides structure, accountability, and focus tools without shame." />
+  <link rel="canonical" href="https://flowspacefocus.com/for-adhd-minds" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080614;
+      color: #ede8ff;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: inherit; }
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .hero {
+      padding: 80px 24px 64px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #7c4dff;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -.5px;
+      color: #ede8ff;
+      margin-bottom: 24px;
+    }
+    .intro {
+      font-size: 17px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.75;
+      max-width: 640px;
+      margin-bottom: 28px;
+    }
+    .disclaimer {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(110,60,220,.18);
+      border-radius: 10px;
+      padding: 16px 20px;
+      max-width: 640px;
+    }
+    .disclaimer-icon {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(188,163,255,.4);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+    .disclaimer-text {
+      font-size: 13px;
+      color: rgba(188,163,255,.4);
+      line-height: 1.65;
+    }
+    .section {
+      padding: 56px 0;
+      border-top: 1px solid rgba(110,60,220,.18);
+    }
+    h2 {
+      font-family: 'Inter', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #ede8ff;
+      margin-bottom: 20px;
+      letter-spacing: -.2px;
+    }
+    p {
+      font-size: 15px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+    p:last-child { margin-bottom: 0; }
+    ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 8px;
+    }
+    ul li {
+      font-size: 15px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.65;
+      padding-left: 20px;
+      position: relative;
+    }
+    ul li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: #7c4dff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ul li strong {
+      color: #ede8ff;
+      font-weight: 600;
+    }
+    /* Problem cards */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .problem-card {
+      background: rgba(124,77,255,.05);
+      border: 1px solid rgba(110,60,220,.18);
+      border-radius: 14px;
+      padding: 22px 22px;
+    }
+    .problem-card .card-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #7c4dff;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 8px;
+    }
+    .problem-card .card-body {
+      font-size: 14px;
+      color: rgba(188,163,255,.65);
+      line-height: 1.65;
+    }
+    /* not-do list */
+    .not-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .not-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      color: rgba(188,163,255,.55);
+      padding-left: 0;
+    }
+    .not-list li::before {
+      content: none;
+    }
+    .not-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(188,163,255,.35);
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(110,60,220,.2);
+      border-radius: 4px;
+      padding: 2px 7px;
+      white-space: nowrap;
+    }
+    /* Steps */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #7c4dff;
+      background: rgba(124,77,255,.12);
+      border: 1px solid rgba(124,77,255,.25);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-body {
+      font-size: 15px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.65;
+    }
+    /* CTA */
+    .cta-section {
+      padding: 64px 0 0;
+      text-align: center;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, rgba(124,77,255,.12) 0%, rgba(124,77,255,.06) 100%);
+      border: 1px solid rgba(124,77,255,.35);
+      border-radius: 20px;
+      padding: 48px 32px;
+    }
+    .cta-box h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .cta-box p {
+      font-size: 15px;
+      margin-bottom: 28px;
+    }
+    .btn-primary {
+      display: inline-block;
+      background: #7c4dff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 14px 32px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .free-note {
+      font-size: 12px;
+      color: rgba(188,163,255,.4);
+      margin-top: 14px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<nav style="position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:16px 52px;border-bottom:1px solid rgba(110,60,220,.18);backdrop-filter:blur(12px);">
+  <a href="/" style="font-size:17px;font-weight:700;letter-spacing:-.3px;color:#ede8ff;text-decoration:none;font-family:'JetBrains Mono',monospace;">FlowSpaceFocus</a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="/pricing" style="font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;font-family:'Inter',sans-serif;">Pricing</a>
+    <a href="/app" style="font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;font-family:'Inter',sans-serif;">Sign in</a>
+    <button onclick="window.location.href='/app?signup=true'" style="background:#7c4dff;color:#fff;border:none;border-radius:999px;padding:9px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Sign Up Free</button>
+  </div>
+</nav>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">For ADHD-Prone Minds</div>
+    <h1>Built for Minds That Start Strong and Get Pulled Away</h1>
+    <p class="intro">FlowSpaceFocus is not an ADHD app. It is a focus app designed for the way distracted minds actually work — starting strong, drifting, getting pulled away by tabs and notifications, and struggling to re-enter. If that sounds familiar, this app was built for you.</p>
+    <div class="disclaimer">
+      <div class="disclaimer-icon">Note</div>
+      <div class="disclaimer-text">FlowSpaceFocus is a productivity tool, not a medical product. It is not a substitute for diagnosis, medication, or therapy. It does not treat ADHD.</div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="section">
+      <h2>The real problems this app addresses</h2>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="card-title">Task initiation</div>
+          <div class="card-body">Starting is the hardest part. FlowSpaceFocus gives you a structured pre-session ritual that makes starting easier.</div>
+        </div>
+        <div class="problem-card">
+          <div class="card-title">Attention drift</div>
+          <div class="card-body">Your mind wanders. FlowOwl checks in without breaking your flow.</div>
+        </div>
+        <div class="problem-card">
+          <div class="card-title">Tab overload</div>
+          <div class="card-body">Opening 12 tabs is a symptom. The app keeps you anchored to one goal per session.</div>
+        </div>
+        <div class="problem-card">
+          <div class="card-title">Doom scrolling before starting</div>
+          <div class="card-body">The timer and goal-setting ritual create a clear entry point so you stop circling and start.</div>
+        </div>
+        <div class="problem-card">
+          <div class="card-title">Re-entry after distraction</div>
+          <div class="card-body">The AI coach helps you get back on task without shame or a long wind-up.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Why structure helps</h2>
+      <p>Distracted minds often do not lack motivation. They lack containers. FlowSpaceFocus provides a clear start, a defined task, a time boundary, and a coach who holds you to your own commitment.</p>
+    </div>
+
+    <div class="section">
+      <h2>What the app does not do</h2>
+      <ul class="not-list">
+        <li><span class="not-badge">Not included</span> Diagnose ADHD</li>
+        <li><span class="not-badge">Not included</span> Replace medication or clinical treatment</li>
+        <li><span class="not-badge">Not included</span> Work for everyone in the same way</li>
+        <li><span class="not-badge">Not included</span> Claim to fix focus permanently</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>How to get started</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Start with a 15-minute session.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">Pick one task.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">Choose a playlist that matches your energy.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">Let FlowOwl ask you one question before you start. That is the whole ask.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <div class="cta-box">
+        <h2>No pressure. No overwhelm. Just start.</h2>
+        <p>Your first session is free. No credit card required.</p>
+        <a href="/app?signup=true" class="btn-primary">Start your first session free →</a>
+        <div class="free-note">Free plan available. No credit card required.</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer style="border-top:1px solid rgba(110,60,220,.18);padding:40px 52px;margin-top:80px;">
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px;margin-bottom:32px;">
+    <div style="max-width:260px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#ede8ff;margin-bottom:8px;">FlowSpaceFocus</div>
+      <div style="font-size:13px;color:rgba(188,163,255,.55);line-height:1.7;">Web-based AI focus app for distracted and ADHD-prone minds.</div>
+    </div>
+    <div style="display:flex;gap:48px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#ede8ff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;">Product</div>
+        <a href="/how-it-works" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">How it works</a>
+        <a href="/ai-accountability-coach" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">AI Coach</a>
+        <a href="/focus-playlists" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Focus Playlists</a>
+        <a href="/pricing" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Pricing</a>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#ede8ff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;">Learn</div>
+        <a href="/faq" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">FAQ</a>
+        <a href="/for-adhd-minds" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">For ADHD Minds</a>
+        <a href="https://blog.flowspacefocus.com" style="display:block;font-size:13px;color:rgba(188,163,255,.55);text-decoration:none;margin-bottom:8px;">Blog</a>
+      </div>
+    </div>
+  </div>
+  <div style="border-top:1px solid rgba(110,60,220,.18);padding-top:20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(140,110,200,.35);">© 2026 FlowSpaceFocus by Royale Automation. All rights reserved.</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(140,110,200,.28);">flowspacefocus.com</div>
+  </div>
+</footer>
+
+</body>
+</html>

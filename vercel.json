@@ -8,6 +8,14 @@
     { "src": "/api/(.*)", "dest": "/server.js" },
     { "src": "/owlface.png", "dest": "/public/owlface.png" },
     { "src": "/app", "dest": "/public/app.html" },
+    { "src": "/robots.txt", "dest": "/public/robots.txt" },
+    { "src": "/sitemap.xml", "dest": "/public/sitemap.xml" },
+    { "src": "/faq", "dest": "/public/faq.html" },
+    { "src": "/how-it-works", "dest": "/public/how-it-works.html" },
+    { "src": "/ai-accountability-coach", "dest": "/public/ai-accountability-coach.html" },
+    { "src": "/for-adhd-minds", "dest": "/public/for-adhd-minds.html" },
+    { "src": "/focus-playlists", "dest": "/public/focus-playlists.html" },
+    { "src": "/pricing", "dest": "/public/pricing.html" },
     { "src": "/", "dest": "/public/index.html" },
     { "src": "/(.*)", "dest": "/public/index.html" }
   ]
