@@ -2097,25 +2097,37 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-/* ── Teaser sound previews (1-minute loop) ───────────────────────────── */
+/* ── Teaser sound previews — real app audio ──────────────────────────── */
 (function() {
-  var tCtx = null;
-  var tNodes = [];
-  var tIntervals = [];
-  var tActive = null;
-  var tBtn = null;
-  var tTimer = null;
+  var S3 = 'https://flowspace-audio.s3.us-east-1.amazonaws.com/';
+
+  // Map each teaser card to the exact same tracks used in the app
+  var TEASER_TRACKS = {
+    binaural:  null,  // Web Audio synth — same as app's playBinaural()
+    afrobeats: S3 + 'nigerian-afrobeat/lagos-groove-01.mp3',
+    kompa:     S3 + 'kompa/deep-kompa-01.mp3',
+    classical: S3 + 'focus-classics/late-library-05.mp3',
+  };
+
+  var tCtx     = null;
+  var tAudio   = null;   // HTML Audio element for MP3 tracks
+  var tSynth   = [];     // Web Audio nodes for binaural
+  var tActive  = null;
+  var tBtn     = null;
+  var tTimer   = null;
 
   function getCtx() {
     if (!tCtx) tCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (tCtx.state === 'suspended') tCtx.resume();
     return tCtx;
   }
 
   function stopTeaser() {
-    tNodes.forEach(function(n) { try { n.stop(); n.disconnect(); } catch(e){} });
-    tNodes = [];
-    tIntervals.forEach(clearInterval);
-    tIntervals = [];
+    // Stop MP3
+    if (tAudio) { tAudio.pause(); tAudio.src = ''; tAudio = null; }
+    // Stop binaural synth
+    tSynth.forEach(function(n) { try { n.stop ? n.stop() : n.disconnect(); } catch(e){} });
+    tSynth = [];
     clearTimeout(tTimer);
     if (tBtn) {
       tBtn.classList.remove('playing');
@@ -2126,136 +2138,42 @@ document.addEventListener('keydown', function(e) {
     tActive = null;
   }
 
-  function makeBinaural(ctx, dest) {
-    // Left: 200 Hz, Right: 210 Hz — 10 Hz alpha wave binaural beat
-    // Oscillators run continuously until stopped — no looping needed
-    var merger = ctx.createChannelMerger(2);
-    var gainL = ctx.createGain(); gainL.gain.value = 0.18;
-    var gainR = ctx.createGain(); gainR.gain.value = 0.18;
-    var oscL = ctx.createOscillator(); oscL.type = 'sine'; oscL.frequency.value = 200;
-    var oscR = ctx.createOscillator(); oscR.type = 'sine'; oscR.frequency.value = 210;
-    oscL.connect(gainL); gainL.connect(merger, 0, 0);
-    oscR.connect(gainR); gainR.connect(merger, 0, 1);
-    merger.connect(dest);
-    oscL.start(); oscR.start();
-    tNodes.push(oscL, oscR);
+  function playBinaural() {
+    // Identical to app's playBinaural() — stereo-panned 200 Hz / 210 Hz
+    var ctx = getCtx();
+    var mg  = ctx.createGain(); mg.gain.value = 0.22; mg.connect(ctx.destination);
+    [[-1, 200], [1, 210]].forEach(function(pair) {
+      var osc = ctx.createOscillator();
+      var pan = ctx.createStereoPanner();
+      osc.type = 'sine'; osc.frequency.value = pair[1]; pan.pan.value = pair[0];
+      osc.connect(pan); pan.connect(mg); osc.start();
+      tSynth.push(osc, pan);
+    });
+    tSynth.push(mg);
   }
 
-  function scheduleAfrobeatsMeasure(ctx, dest, masterGain) {
-    // One measure at 110 BPM = 4 beats
-    var bpm = 110, beat = 60 / bpm;
-    var now = ctx.currentTime;
-    // Bass kick on beats 1 and 3
-    [0, beat*2].forEach(function(t) {
-      var osc = ctx.createOscillator(); var g = ctx.createGain();
-      osc.type = 'sine'; osc.frequency.setValueAtTime(180, now+t);
-      osc.frequency.exponentialRampToValueAtTime(40, now+t+0.18);
-      g.gain.setValueAtTime(0.8, now+t); g.gain.exponentialRampToValueAtTime(0.001, now+t+0.22);
-      osc.connect(g); g.connect(masterGain); osc.start(now+t); osc.stop(now+t+0.25);
-      tNodes.push(osc);
-    });
-    // Snare on beat 2
-    var snBuf = ctx.createBuffer(1, ctx.sampleRate*0.1, ctx.sampleRate);
-    var snData = snBuf.getChannelData(0);
-    for (var i=0; i<snData.length; i++) snData[i]=(Math.random()*2-1)*Math.pow(1-i/snData.length,2.5);
-    [beat].forEach(function(t) {
-      var src=ctx.createBufferSource(); var g=ctx.createGain();
-      src.buffer=snBuf; g.gain.setValueAtTime(0.45,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.09);
-      src.connect(g); g.connect(masterGain); src.start(now+t); tNodes.push(src);
-    });
-    // Offbeat hi-hat on every half-beat
-    [0,beat*0.5,beat,beat*1.5,beat*2,beat*2.5,beat*3,beat*3.5].forEach(function(t) {
-      var hBuf=ctx.createBuffer(1,ctx.sampleRate*0.04,ctx.sampleRate);
-      var hData=hBuf.getChannelData(0);
-      for (var i=0;i<hData.length;i++) hData[i]=(Math.random()*2-1)*Math.pow(1-i/hData.length,3);
-      var src=ctx.createBufferSource(); var g=ctx.createGain();
-      src.buffer=hBuf; g.gain.setValueAtTime(0.2,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.04);
-      src.connect(g); g.connect(masterGain); src.start(now+t); tNodes.push(src);
-    });
-  }
-
-  function makeAfrobeats(ctx, dest) {
-    var masterGain = ctx.createGain(); masterGain.gain.value = 0.5; masterGain.connect(dest);
-    var bpm = 110, measureMs = (60/bpm)*4*1000; // ~2182 ms per measure
-    scheduleAfrobeatsMeasure(ctx, dest, masterGain);
-    var iv = setInterval(function() { scheduleAfrobeatsMeasure(ctx, dest, masterGain); }, measureMs);
-    tIntervals.push(iv);
-  }
-
-  function scheduleKompaMeasure(ctx, dest, masterGain) {
-    // One measure at 80 BPM = 4 beats
-    var bpm = 80, beat = 60/bpm;
-    var now = ctx.currentTime;
-    // Bass line — root and fifth alternating
-    [0,beat,beat*2,beat*3].forEach(function(t,i) {
-      var freq=[80,80,120,80][i];
-      var osc=ctx.createOscillator(); var g=ctx.createGain();
-      osc.type='triangle'; osc.frequency.value=freq;
-      g.gain.setValueAtTime(0.7,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+beat*0.85);
-      osc.connect(g); g.connect(masterGain); osc.start(now+t); osc.stop(now+t+beat);
-      tNodes.push(osc);
-    });
-    // Ride cymbal
-    [0,beat*0.5,beat,beat*1.5,beat*2,beat*2.5,beat*3].forEach(function(t) {
-      var rBuf=ctx.createBuffer(1,ctx.sampleRate*0.06,ctx.sampleRate);
-      var rData=rBuf.getChannelData(0);
-      for (var i=0;i<rData.length;i++) rData[i]=(Math.random()*2-1)*Math.pow(1-i/rData.length,1.8)*0.6;
-      var src=ctx.createBufferSource(); var g=ctx.createGain();
-      src.buffer=rBuf; g.gain.setValueAtTime(0.15,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.05);
-      src.connect(g); g.connect(masterGain); src.start(now+t); tNodes.push(src);
-    });
-  }
-
-  function makeKompa(ctx, dest) {
-    var masterGain = ctx.createGain(); masterGain.gain.value = 0.45; masterGain.connect(dest);
-    var bpm = 80, measureMs = (60/bpm)*4*1000; // 3000 ms per measure
-    scheduleKompaMeasure(ctx, dest, masterGain);
-    var iv = setInterval(function() { scheduleKompaMeasure(ctx, dest, masterGain); }, measureMs);
-    tIntervals.push(iv);
-  }
-
-  function scheduleClassicalPhrase(ctx, dest, masterGain, rev) {
-    // Ascending C-E-G-C arpeggio then descending G-E-C
-    var notes = [261.6, 329.6, 392.0, 523.3, 392.0, 329.6, 261.6];
-    var dur = 0.36;
-    var now = ctx.currentTime;
-    notes.forEach(function(freq, i) {
-      var t = now + i * dur;
-      var osc=ctx.createOscillator(); var g=ctx.createGain();
-      osc.type='sine'; osc.frequency.value=freq;
-      var osc2=ctx.createOscillator(); var g2=ctx.createGain();
-      osc2.type='sine'; osc2.frequency.value=freq*2; g2.gain.value=0.1;
-      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.65,t+0.02);
-      g.gain.setValueAtTime(0.65,t+dur*0.6); g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.95);
-      osc.connect(g); g.connect(masterGain);
-      osc2.connect(g2); g2.connect(rev);
-      osc.start(t); osc.stop(t+dur); osc2.start(t); osc2.stop(t+dur);
-      tNodes.push(osc, osc2);
-    });
-  }
-
-  function makeClassical(ctx, dest) {
-    var masterGain = ctx.createGain(); masterGain.gain.value = 0.25; masterGain.connect(dest);
-    var rev = ctx.createGain(); rev.gain.value = 0.08; rev.connect(dest);
-    var phraseMs = 7 * 0.36 * 1000 + 400; // 7 notes × 360 ms + 400 ms rest ≈ 2920 ms
-    scheduleClassicalPhrase(ctx, dest, masterGain, rev);
-    var iv = setInterval(function() { scheduleClassicalPhrase(ctx, dest, masterGain, rev); }, phraseMs);
-    tIntervals.push(iv);
+  function playTrack(url) {
+    tAudio = new Audio();
+    tAudio.src = url;
+    tAudio.volume = 0.75;
+    tAudio.loop = true;   // loop the track for the full preview
+    tAudio.play().catch(function() {});
   }
 
   window.toggleTeaser = function(btn, type) {
     if (tActive === type) { stopTeaser(); return; }
     stopTeaser();
-    var ctx = getCtx();
     tActive = type;
     tBtn = btn;
     btn.classList.add('playing');
     btn.querySelector('.tc-play-icon').textContent = '■';
     btn.querySelector('.tc-play-label').textContent = 'Stop';
-    if (type === 'binaural')  makeBinaural(ctx, ctx.destination);
-    if (type === 'afrobeats') makeAfrobeats(ctx, ctx.destination);
-    if (type === 'kompa')     makeKompa(ctx, ctx.destination);
-    if (type === 'classical') makeClassical(ctx, ctx.destination);
+
+    if (type === 'binaural') {
+      playBinaural();
+    } else {
+      playTrack(TEASER_TRACKS[type]);
+    }
     // Auto-stop after 60 seconds
     tTimer = setTimeout(stopTeaser, 60000);
   };
