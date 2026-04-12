@@ -1046,6 +1046,27 @@ async function callOwl(panel, userText) {
     });
 
     if (!res.ok) {
+      // On 401, force-refresh the Clerk token and retry once
+      if (res.status === 401 && window.Clerk?.session) {
+        try { clerkToken = await window.Clerk.session.getToken({ skipCache: true }); } catch (_) {}
+        const chatBody = JSON.stringify({
+          messages: hist,
+          stage: panel === 'halfway' ? 'halfway' : panel === 'before' ? 'before' : panel === 'after' ? 'after' : 'insights',
+          goal: sessionGoal,
+        });
+        const retry = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${clerkToken}` },
+          body: chatBody,
+        });
+        if (retry.ok) {
+          const { reply } = await retry.json();
+          hist.push({ role: 'assistant', content: reply });
+          return reply;
+        }
+        const retryErr = await retry.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(retryErr.error || 'Request failed');
+      }
       const err = await res.json().catch(() => ({ error: 'Request failed' }));
       throw new Error(err.error || 'Request failed');
     }

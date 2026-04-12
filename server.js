@@ -17,6 +17,11 @@ const db = new Pool({
 });
 
 app.use(express.json());
+
+// Validate required env vars at startup
+for (const key of ['ANTHROPIC_API_KEY', 'CLERK_SECRET_KEY']) {
+  if (!process.env[key]) console.error(`[STARTUP ERROR] Missing required env var: ${key}`);
+}
 // Static files served by Vercel CDN in production; served locally for dev
 if (process.env.NODE_ENV !== 'production') {
   app.use(express.static(path.join(__dirname, 'public')));
@@ -37,13 +42,13 @@ async function requireAuth(req, res, next) {
     const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
     if (!token) return res.status(401).json({ error: 'Not signed in.' });
 
-    const payload = await clerk.verifyToken(token, {
-      authorizedParties: AUTHORIZED_PARTIES,
-    });
+    const verifyOpts = { authorizedParties: AUTHORIZED_PARTIES };
+    if (process.env.CLERK_JWT_KEY) verifyOpts.jwtKey = process.env.CLERK_JWT_KEY;
+    const payload = await clerk.verifyToken(token, verifyOpts);
     req.userId = payload.sub;
     next();
   } catch (err) {
-    console.error('[Auth error]', err.message);
+    console.error('[Auth error]', err.message, { name: err.name, errors: err.errors });
     return res.status(401).json({ error: 'Invalid session. Please sign in again.' });
   }
 }
