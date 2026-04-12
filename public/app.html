@@ -1180,7 +1180,8 @@ function startSession() {
   if (sessionRunning) return;
 
   sessionGoal = document.getElementById('goalInput').value.trim();
-  const durMin = parseInt(document.getElementById('durationSelect').value, 10);
+  const rawMin = parseInt(document.getElementById('durationSelect').value, 10);
+  const durMin = window.isPro ? rawMin : Math.min(rawMin, 15);
   timerTotal     = durMin * 60;
   timerRemaining = timerTotal;
   halfwayFired   = false;
@@ -1754,26 +1755,7 @@ window.addEventListener('DOMContentLoaded', () => {
   ">Sign in</button>
 </div>
 
-<div id="proGate" style="
-  display:none; position:fixed; inset:0; z-index:9999;
-  background:rgba(4,3,14,.97); backdrop-filter:blur(16px);
-  align-items:center; justify-content:center; flex-direction:column; gap:16px;
-">
-  <img src="/owlface.png" style="width:90px;filter:drop-shadow(0 0 28px rgba(120,70,255,.8));" onerror="this.style.display='none'" />
-  <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:#fff;">FlowOwl is a Pro feature</div>
-  <div style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(200,180,255,.6);text-align:center;max-width:320px;line-height:1.7;">
-    Your account doesn't have an active subscription.<br>Upgrade on FlowSpaceFocus to unlock your AI coach.
-  </div>
-  <a href="https://flowspacefocus.com/pricing" style="
-    background:#7c3aed;color:#fff;padding:12px 28px;border-radius:999px;
-    font-family:'Space Mono',monospace;font-size:12px;font-weight:700;
-    text-decoration:none;margin-top:8px;
-  ">Upgrade to Pro</a>
-  <button onclick="window.__clerkSignOut()" style="
-    background:transparent;border:none;color:rgba(200,180,255,.4);
-    font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;margin-top:4px;
-  ">Sign out</button>
-</div>
+<!-- proGate removed — free users now access the app with a 15-min cap -->
 
 <script>
 // ── Clerk boot ────────────────────────────────────────────────────────────────
@@ -1781,8 +1763,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // window.Clerk is auto-instantiated by the script tag above.
 let clerkToken = null;
 
-const gate    = () => document.getElementById('clerkGate');
-const proGate = () => document.getElementById('proGate');
+const gate = () => document.getElementById('clerkGate');
 
 function showSignInBtn(label) {
   const btn = document.getElementById('signInBtn');
@@ -1847,47 +1828,77 @@ function showUserAvatar(user) {
 async function checkUser() {
   const user = window.Clerk.user;
   if (!user) {
-    // If landing page sent ?signup=true, go straight to Clerk sign-up
     if (new URLSearchParams(window.location.search).get('signup') === 'true') {
       await window.Clerk.redirectToSignUp({ redirectUrl: window.location.origin + '/app' });
       return;
     }
-    gate().style.display    = 'flex';
-    proGate().style.display = 'none';
+    gate().style.display = 'flex';
     return;
   }
 
-  // ── Fast path: public metadata is available directly in the browser ──────────
-  // Set {"isPro": true} in Clerk Dashboard → Users → your user → Public Metadata
+  // All signed-in users get into the app
+  gate().style.display = 'none';
+  showUserAvatar(user);
+  try { clerkToken = await window.Clerk.session.getToken(); } catch (_) {}
+
+  // Check Pro status — fast path via public metadata, else ask server
+  let pro = false;
   if (user.publicMetadata?.isPro) {
-    gate().style.display    = 'none';
-    proGate().style.display = 'none';
-    showUserAvatar(user);
-    // Still get a token for API calls
-    try { clerkToken = await window.Clerk.session.getToken(); } catch (_) {}
-    return;
+    pro = true;
+  } else {
+    try {
+      const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${clerkToken}` } });
+      const data = await res.json();
+      pro = !!data.isPro;
+    } catch (e) {
+      console.error('[/api/me error]', e);
+      pro = false; // network error → treat as free
+    }
   }
 
-  // ── Slower path: ask server (checks private metadata + Stripe) ───────────────
-  try {
-    clerkToken = await window.Clerk.session.getToken();
-    const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${clerkToken}` } });
-    const data = await res.json();
+  applyTier(pro);
+}
 
-    if (!data.isPro) {
-      gate().style.display    = 'none';
-      proGate().style.display = 'flex';
-      return;
+// ── Apply free vs Pro tier restrictions ───────────────────────────────────────
+function applyTier(pro) {
+  window.isPro = pro;
+
+  const sel = document.getElementById('durationSelect');
+
+  if (pro) {
+    // Pro: unlock everything, remove any upgrade overlay
+    if (sel) Array.from(sel.options).forEach(o => { o.disabled = false; });
+    document.getElementById('coachUpgradeOverlay')?.remove();
+  } else {
+    // Free: cap timer at 15 min
+    if (sel) {
+      sel.value = '15';
+      Array.from(sel.options).forEach(o => { if (parseInt(o.value) > 15) o.disabled = true; });
     }
 
-    gate().style.display    = 'none';
-    proGate().style.display = 'none';
-    showUserAvatar(user);
-  } catch (e) {
-    console.error('[/api/me error]', e);
-    // Network error — fail open rather than hard-block a paying user
-    gate().style.display    = 'none';
-    proGate().style.display = 'none';
+    // Lock AI coach with upgrade overlay
+    const section = document.querySelector('.coach-section');
+    if (section && !document.getElementById('coachUpgradeOverlay')) {
+      section.style.position = 'relative';
+      const overlay = document.createElement('div');
+      overlay.id = 'coachUpgradeOverlay';
+      overlay.style.cssText = [
+        'position:absolute', 'inset:0', 'z-index:50',
+        'background:rgba(4,3,14,.88)', 'backdrop-filter:blur(8px)',
+        'border-radius:14px',
+        'display:flex', 'flex-direction:column', 'align-items:center',
+        'justify-content:center', 'gap:14px', 'text-align:center', 'padding:24px'
+      ].join(';');
+      overlay.innerHTML = `
+        <img src="/owlface.png" style="width:72px;filter:drop-shadow(0 0 22px rgba(120,70,255,.75));" onerror="this.style.display='none'"/>
+        <div style="font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:#fff;">FlowOwl is a Pro feature</div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(200,180,255,.6);max-width:300px;line-height:1.8;">
+          You're on the free plan · 15-min sessions.<br>Upgrade to unlock AI coaching &amp; unlimited session lengths.
+        </div>
+        <a href="https://flowspacefocus.com/#pricing" style="background:#7c3aed;color:#fff;padding:11px 28px;border-radius:999px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;margin-top:4px;">Upgrade to Pro →</a>
+      `;
+      section.appendChild(overlay);
+    }
   }
 }
 
