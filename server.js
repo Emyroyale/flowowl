@@ -3,7 +3,7 @@ const express   = require('express');
 const path      = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { Pool }  = require('pg');
-const { createClerkClient } = require('@clerk/backend');
+const { createClerkClient, verifyToken: clerkVerifyToken } = require('@clerk/backend');
 const Stripe    = require('stripe');
 
 const app    = express();
@@ -42,9 +42,11 @@ async function requireAuth(req, res, next) {
     const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
     if (!token) return res.status(401).json({ error: 'Not signed in.' });
 
-    const verifyOpts = { authorizedParties: AUTHORIZED_PARTIES };
-    if (process.env.CLERK_JWT_KEY) verifyOpts.jwtKey = process.env.CLERK_JWT_KEY;
-    const payload = await clerk.verifyToken(token, verifyOpts);
+    const payload = await clerkVerifyToken(token, {
+      jwtKey: process.env.CLERK_JWT_KEY,
+      secretKey: process.env.CLERK_SECRET_KEY,
+      authorizedParties: AUTHORIZED_PARTIES,
+    });
     req.userId = payload.sub;
     next();
   } catch (err) {
