@@ -6,6 +6,7 @@
   <title>FlowSpaceFocus — Focus Timer for Distracted Minds</title>
   <link rel="icon" type="image/png" href="/owlface.png" />
   <link rel="shortcut icon" type="image/png" href="/owlface.png" />
+  <link rel="preload" as="image" href="/owlface.png" fetchpriority="high" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
@@ -80,7 +81,7 @@
       border-bottom:1px solid var(--border);
       backdrop-filter:blur(12px);
     }
-    .logo { font-size:17px; font-weight:700; letter-spacing:-.3px; color:var(--text); }
+    .logo { font-size:17px; font-weight:700; letter-spacing:-.3px; color:var(--text); text-decoration:none; cursor:pointer; }
     .nav-links { display:flex; align-items:center; gap:32px; }
     .nav-link { font-size:13px; color:var(--muted); cursor:pointer; transition:color .2s; background:none;border:none; }
     .nav-link:hover { color:var(--text); }
@@ -991,11 +992,11 @@
 
 <!-- NAV -->
 <nav>
-  <div class="logo">FlowSpaceFocus</div>
+  <a href="/" class="logo">FlowSpaceFocus</a>
   <div style="display:flex;align-items:center;gap:12px;">
     <a href="#pricing" class="nav-link" style="text-decoration:none;">Pricing</a>
-    <a href="/app" class="nav-link" style="text-decoration:none;">Login</a>
-    <button class="btn-nav" onclick="window.location.href='/app'">Start Focusing Free</button>
+    <a href="/app" class="nav-link" style="text-decoration:none;">Sign in</a>
+    <button class="btn-nav" onclick="window.location.href='/app?signup=true'">Sign Up Free</button>
   </div>
 </nav>
 
@@ -1016,6 +1017,8 @@
       <img class="owl-img"
         src="/owlface.png"
         alt="FlowSpaceFocus Owl"
+        fetchpriority="high"
+        loading="eager"
         onerror="this.style.display='none';"
       />
       <div class="owl-badge">

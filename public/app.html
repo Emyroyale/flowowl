@@ -1847,6 +1847,11 @@ function showUserAvatar(user) {
 async function checkUser() {
   const user = window.Clerk.user;
   if (!user) {
+    // If landing page sent ?signup=true, go straight to Clerk sign-up
+    if (new URLSearchParams(window.location.search).get('signup') === 'true') {
+      await window.Clerk.redirectToSignUp({ redirectUrl: window.location.origin + '/app' });
+      return;
+    }
     gate().style.display    = 'flex';
     proGate().style.display = 'none';
     return;
