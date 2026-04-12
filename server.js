@@ -231,7 +231,13 @@ app.get('/api/stats', requireAuth, async (req, res) => {
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, keySet: !!process.env.ANTHROPIC_API_KEY });
+  res.json({
+    ok: true,
+    anthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    clerkSecretKey: !!process.env.CLERK_SECRET_KEY,
+    clerkJwtKey: !!process.env.CLERK_JWT_KEY,
+    clerkJwtKeyLen: process.env.CLERK_JWT_KEY?.length ?? 0,
+  });
 });
 
 const PORT = process.env.PORT || 3000;
