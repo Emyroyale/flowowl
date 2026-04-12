@@ -18,6 +18,14 @@ const db = new Pool({
 
 app.use(express.json());
 
+// ── DB: ensure UserLogin table exists ─────────────────────────────────────────
+db.query(`
+  CREATE TABLE IF NOT EXISTS "UserLogin" (
+    "userId"    TEXT PRIMARY KEY,
+    "lastLogin" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`).catch(err => console.error('[DB init] UserLogin table error:', err.message));
+
 // Validate required env vars at startup
 for (const key of ['ANTHROPIC_API_KEY', 'CLERK_SECRET_KEY']) {
   if (!process.env[key]) console.error(`[STARTUP ERROR] Missing required env var: ${key}`);
@@ -124,13 +132,32 @@ app.get('/api/me', requireAuth, async (req, res) => {
       }
     }
 
+    // Track login — read previous timestamp, then upsert current
+    let prevLastLogin = null;
+    try {
+      const prev = await db.query(
+        'SELECT "lastLogin" FROM "UserLogin" WHERE "userId" = $1',
+        [req.userId]
+      );
+      prevLastLogin = prev.rows[0]?.lastLogin ?? null;
+      await db.query(
+        `INSERT INTO "UserLogin" ("userId", "lastLogin")
+         VALUES ($1, NOW())
+         ON CONFLICT ("userId") DO UPDATE SET "lastLogin" = NOW()`,
+        [req.userId]
+      );
+    } catch (dbErr) {
+      console.error('[DB login track]', dbErr.message);
+    }
+
     res.json({
-      id:        req.userId,
-      firstName: user.firstName,
-      lastName:  user.lastName,
-      email:     user.emailAddresses?.[0]?.emailAddress,
-      imageUrl:  user.imageUrl,
+      id:           req.userId,
+      firstName:    user.firstName,
+      lastName:     user.lastName,
+      email:        user.emailAddresses?.[0]?.emailAddress,
+      imageUrl:     user.imageUrl,
       isPro,
+      prevLastLogin,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

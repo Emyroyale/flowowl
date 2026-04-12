@@ -1841,26 +1841,99 @@ async function checkUser() {
   showUserAvatar(user);
   try { clerkToken = await window.Clerk.session.getToken(); } catch (_) {}
 
-  // Check Pro status — fast path via public metadata, else ask server
-  let pro = false;
-  if (user.publicMetadata?.isPro) {
-    pro = true;
-  } else {
-    try {
-      const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${clerkToken}` } });
-      const data = await res.json();
-      pro = !!data.isPro;
-    } catch (e) {
-      console.error('[/api/me error]', e);
-      pro = false; // network error → treat as free
-    }
+  // Always call /api/me — tracks last_login and returns prevLastLogin + Pro status
+  let pro = user.publicMetadata?.isPro || false;
+  let prevLastLogin = null;
+  let firstName = user.firstName || '';
+  try {
+    const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${clerkToken}` } });
+    const data = await res.json();
+    pro          = !!data.isPro;
+    prevLastLogin = data.prevLastLogin || null;
+    firstName    = data.firstName || firstName;
+  } catch (e) {
+    console.error('[/api/me error]', e);
   }
 
-  applyTier(pro);
+  applyTier(pro, prevLastLogin, firstName);
+}
+
+// ── Return copy — select message based on days away ───────────────────────────
+function getReturnCopy(firstName, prevLastLogin) {
+  const diffDays = (Date.now() - new Date(prevLastLogin)) / 86400000;
+  const n = firstName || 'hey';
+
+  if (diffDays < 2) {
+    return [
+      `Welcome back, ${n}.`,
+      `One day away and you're already here again.`,
+      `That's not a gap. That's just life.`,
+      `FlowOwl's warmed up and ready.`,
+      `What's on your plate today?`,
+    ];
+  }
+  if (diffDays < 7) {
+    return [
+      `We were thinking about you, ${n}.`,
+      `The week got busy. It always does.`,
+      `But here you are and that means something.`,
+      `No catching up needed. We start fresh, right now.`,
+      `What's on your plate today?`,
+    ];
+  }
+  if (diffDays < 14) {
+    return [
+      `${n}. You came back.`,
+      `We won't ask where you've been.`,
+      `Life pulled you somewhere else for a while and now you've pulled yourself back here.`,
+      `That takes more courage than people realize.`,
+      `What's on your plate today?`,
+    ];
+  }
+  return [
+    `${n}. Hey.`,
+    `It's been a while. We're not here to make you feel bad about that.`,
+    `We're just glad you opened this.`,
+    `Whatever happened, whatever didn't — it doesn't disqualify you from starting again.`,
+    `You're here. That's enough.`,
+    `What's on your plate today?`,
+  ];
+}
+
+// ── Modal builder — shared style for welcome + return modals ──────────────────
+function buildModal(id, imgSize, lines, ctaText) {
+  if (document.getElementById(id)) return;
+  const modal = document.createElement('div');
+  modal.id = id;
+  modal.style.cssText = [
+    'position:fixed','inset:0','z-index:9999',
+    'background:rgba(4,3,14,.93)','backdrop-filter:blur(16px)',
+    'display:flex','flex-direction:column','align-items:center',
+    'justify-content:center','gap:10px','text-align:center','padding:36px'
+  ].join(';');
+
+  const lineHTML = lines.map((l, i) => {
+    const isLast = i === lines.length - 1;
+    const color  = isLast ? 'rgba(124,77,255,.9)' : 'rgba(200,180,255,.72)';
+    const mt     = i === 0 ? '2px' : (isLast ? '8px' : '0');
+    return `<div style="font-family:'Space Mono',monospace;font-size:12.5px;color:${color};line-height:1.85;margin-top:${mt};">${l}</div>`;
+  }).join('');
+
+  modal.innerHTML = `
+    <img src="/owlface.png" style="width:${imgSize}px;filter:drop-shadow(0 0 28px rgba(120,70,255,.85));margin-bottom:6px;" onerror="this.style.display='none'"/>
+    ${lineHTML}
+    <button onclick="document.getElementById('${id}').remove()" style="
+      background:#7c3aed;color:#fff;padding:11px 30px;border-radius:999px;
+      font-family:'Space Mono',monospace;font-size:13px;font-weight:700;
+      border:none;cursor:pointer;margin-top:14px;
+      box-shadow:0 0 26px rgba(124,77,255,.45);
+    ">${ctaText}</button>
+  `;
+  document.body.appendChild(modal);
 }
 
 // ── Apply free vs Pro tier restrictions ───────────────────────────────────────
-function applyTier(pro) {
+function applyTier(pro, prevLastLogin, firstName) {
   window.isPro = pro;
 
   const sel = document.getElementById('durationSelect');
@@ -1868,37 +1941,19 @@ function applyTier(pro) {
   if (pro) {
     // Pro: unlock everything, remove any upgrade overlay
     if (sel) Array.from(sel.options).forEach(o => { o.disabled = false; });
-    const wasOverlay = !!document.getElementById('coachUpgradeOverlay');
     document.getElementById('coachUpgradeOverlay')?.remove();
 
-    // Show welcome-to-Pro modal once per account
-    if (wasOverlay || !localStorage.getItem('fs_pro_welcomed')) {
-      localStorage.setItem('fs_pro_welcomed', '1');
-      const modal = document.createElement('div');
-      modal.id = 'proWelcomeModal';
-      modal.style.cssText = [
-        'position:fixed','inset:0','z-index:9999',
-        'background:rgba(4,3,14,.92)','backdrop-filter:blur(14px)',
-        'display:flex','flex-direction:column','align-items:center',
-        'justify-content:center','gap:18px','text-align:center','padding:32px'
-      ].join(';');
-      modal.innerHTML = `
-        <img src="/owlface.png" style="width:90px;filter:drop-shadow(0 0 32px rgba(120,70,255,.9));" onerror="this.style.display='none'"/>
-        <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:#fff;line-height:1.5;">
-          Welcome to Pro.<br><span style="color:var(--accent);">Seriously. Welcome.</span>
-        </div>
-        <div style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(200,180,255,.65);max-width:340px;line-height:1.9;">
-          Most people stay stuck at the gate.<br>You walked through it.<br><br>
-          FlowOwl's got you from here.<br>Let's build something.
-        </div>
-        <button onclick="document.getElementById('proWelcomeModal').remove()" style="
-          background:#7c3aed;color:#fff;padding:12px 32px;border-radius:999px;
-          font-family:'Space Mono',monospace;font-size:13px;font-weight:700;
-          border:none;cursor:pointer;margin-top:6px;
-          box-shadow:0 0 28px rgba(124,77,255,.5);
-        ">Let's go →</button>
-      `;
-      document.body.appendChild(modal);
+    if (!prevLastLogin) {
+      // Brand new Pro user — show one-time welcome modal
+      buildModal('proWelcomeModal', 88, [
+        'Welcome to Pro. Seriously — welcome.',
+        'Most people stay stuck at the gate. You walked through it.',
+        'FlowOwl\'s got you from here.',
+        'Let\'s build something.',
+      ], 'Let\'s go →');
+    } else {
+      // Returning Pro user — show personalised return message
+      buildModal('returnModal', 72, getReturnCopy(firstName, prevLastLogin), 'I\'m ready →');
     }
   } else {
     // Free: cap timer at 15 min
