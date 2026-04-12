@@ -1745,7 +1745,9 @@ window.addEventListener('DOMContentLoaded', () => {
   background:rgba(4,3,14,.97); backdrop-filter:blur(16px);
   align-items:center; justify-content:center; flex-direction:column; gap:20px;
 ">
-  <img src="/owlface.png" style="width:90px;filter:drop-shadow(0 0 28px rgba(120,70,255,.8));" onerror="this.style.display='none'" />
+  <a href="/" title="Back to homepage" style="display:block;line-height:0;">
+    <img src="/owlface.png" style="width:90px;filter:drop-shadow(0 0 28px rgba(120,70,255,.8));cursor:pointer;transition:transform .2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" onerror="this.style.display='none'" />
+  </a>
   <div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:#fff;">FlowOwl</div>
   <div style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(200,180,255,.6);margin-bottom:8px;">Sign in to access your AI coach</div>
   <button id="signInBtn" onclick="handleSignIn()" style="
@@ -1753,6 +1755,10 @@ window.addEventListener('DOMContentLoaded', () => {
     font-family:'Space Mono',monospace;font-size:13px;font-weight:700;
     border:none;cursor:pointer;margin-top:8px;
   ">Sign in</button>
+  <a href="/" style="
+    font-family:'Space Mono',monospace;font-size:11px;color:rgba(188,163,255,.4);
+    text-decoration:none;margin-top:12px;transition:color .2s;
+  " onmouseover="this.style.color='rgba(188,163,255,.85)'" onmouseout="this.style.color='rgba(188,163,255,.4)'">← Back to homepage</a>
 </div>
 
 <!-- proGate removed — free users now access the app with a 15-min cap -->
