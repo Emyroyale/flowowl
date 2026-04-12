@@ -325,6 +325,37 @@
     .gb-lofi      { background:#0a1a30; color:#60b0ff; }
     .gb-jazz      { background:#2a1000; color:#ffb040; }
 
+    /* ── Teaser sound cards ──────────────────────────────────────────── */
+    .teaser-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;
+    }
+    .teaser-card {
+      border-radius:10px; padding:12px 13px;
+      display:flex; flex-direction:column; gap:6px;
+      background-image:radial-gradient(circle,rgba(0,0,0,.2) 1px,transparent 1px);
+      background-size:9px 9px;
+      transition:transform .15s, box-shadow .15s;
+    }
+    .teaser-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.35); }
+    .tc-binaural  { background:#1a0a3a; }
+    .tc-afrobeats { background:#7a1a00; }
+    .tc-kompa     { background:#003a2a; }
+    .tc-classical { background:#1a0830; }
+    .tc-meta { display:flex; align-items:center; gap:6px; }
+    .tc-dot  { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .tc-tag  { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:rgba(255,255,255,.4); }
+    .tc-name { font-family:var(--mono); font-size:12px; font-weight:700; color:#fff; line-height:1.2; }
+    .tc-play-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      margin-top:4px; padding:5px 10px; border-radius:5px; border:none; cursor:pointer;
+      font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.04em;
+      background:rgba(255,255,255,.1); color:rgba(255,255,255,.75);
+      transition:background .15s, color .15s; width:fit-content;
+    }
+    .tc-play-btn:hover { background:rgba(255,255,255,.18); color:#fff; }
+    .tc-play-btn.playing { background:rgba(255,255,255,.2); color:#fff; }
+    .tc-play-icon { font-size:9px; }
+
     /* timer mockup */
     .timer-mock {
       display:flex; flex-direction:column; align-items:center; gap:10px; padding:8px 0;
@@ -925,6 +956,9 @@
       .jstep-text p  { font-size: 12px; }
       .pixel-divider { margin: 14px 0; }
 
+      .teaser-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+      .tc-name { font-size: 11px; }
+
       .playlist-section { margin-top: 36px; }
       .playlist-grid { grid-template-columns: 1fr; gap: 10px; }
       .playlist-card { padding: 18px 16px; }
@@ -1139,7 +1173,6 @@
   <div class="headline">
     <h1>You don't have a focus problem.<em>You have too many things pulling you away.</em></h1>
     <p style="font-size:16px;color:rgba(188,163,255,.72);max-width:580px;line-height:1.75;margin:16px auto 0;text-align:center;">FlowSpaceFocus is a web-based AI focus app for distracted and ADHD-prone minds. Use guided playlists, timed work sessions, and an accountability coach to stay on task and finish what matters.</p>
-    <p>FlowSpaceFocus helps you stay. Finish. And feel in control again.<br><span style="opacity:.6;">Built for minds that start strong but struggle to stay locked in. No noise. No guilt. Just progress.</span></p>
     <div class="cta-row">
       <button class="btn-cta" onclick="window.location.href='/app'">Start focusing for free &rarr;</button>
       <button class="btn-alt" onclick="window.location.href='/app'">No pressure. Just one session.</button>
@@ -1177,7 +1210,38 @@
         <div class="jstep-num n1">1</div>
         <h3>Get into the zone faster than your distractions.</h3>
         <p>Your brain needs the right entry point. Pick a sound that matches your energy so you don't fight yourself just to start.</p>
-        <a href="#playlists" style="cursor:pointer;">Browse all 8 playlists</a>
+        <!-- Sound teaser cards -->
+        <div class="teaser-grid" id="teaserGrid">
+          <div class="teaser-card tc-binaural">
+            <div class="tc-meta"><span class="tc-dot" style="background:#b39dff;"></span><span class="tc-tag">Deep Focus</span></div>
+            <div class="tc-name">Binaural Beats</div>
+            <button class="tc-play-btn" onclick="toggleTeaser(this,'binaural')" aria-label="Preview Binaural Beats">
+              <span class="tc-play-icon">▶</span><span class="tc-play-label">Preview</span>
+            </button>
+          </div>
+          <div class="teaser-card tc-afrobeats">
+            <div class="tc-meta"><span class="tc-dot" style="background:#ff9060;"></span><span class="tc-tag">Energy Mode</span></div>
+            <div class="tc-name">Afrobeats Focus</div>
+            <button class="tc-play-btn" onclick="toggleTeaser(this,'afrobeats')" aria-label="Preview Afrobeats Focus">
+              <span class="tc-play-icon">▶</span><span class="tc-play-label">Preview</span>
+            </button>
+          </div>
+          <div class="teaser-card tc-kompa">
+            <div class="tc-meta"><span class="tc-dot" style="background:#00ff9a;"></span><span class="tc-tag">Flow State</span></div>
+            <div class="tc-name">Kompa Flow</div>
+            <button class="tc-play-btn" onclick="toggleTeaser(this,'kompa')" aria-label="Preview Kompa Flow">
+              <span class="tc-play-icon">▶</span><span class="tc-play-label">Preview</span>
+            </button>
+          </div>
+          <div class="teaser-card tc-classical">
+            <div class="tc-meta"><span class="tc-dot" style="background:#e080ff;"></span><span class="tc-tag">Precision</span></div>
+            <div class="tc-name">Classical Focus</div>
+            <button class="tc-play-btn" onclick="toggleTeaser(this,'classical')" aria-label="Preview Classical Focus">
+              <span class="tc-play-icon">▶</span><span class="tc-play-label">Preview</span>
+            </button>
+          </div>
+        </div>
+        <a href="#playlists" style="font-family:var(--mono);font-size:11px;color:rgba(188,163,255,.45);text-decoration:none;display:inline-block;margin-top:10px;transition:color .2s;" onmouseover="this.style.color='rgba(188,163,255,.9)'" onmouseout="this.style.color='rgba(188,163,255,.45)'">See all 8 playlists ↓</a>
       </div>
       <div class="jstep-ui">
         <div class="jui-bar">
@@ -2033,6 +2097,144 @@ document.addEventListener('keydown', function(e) {
     ['privacy','terms'].forEach(closeModal);
   }
 });
+
+/* ── Teaser sound previews ───────────────────────────────────────────── */
+(function() {
+  var tCtx = null;
+  var tNodes = [];
+  var tActive = null;
+  var tBtn = null;
+  var tTimer = null;
+
+  function getCtx() {
+    if (!tCtx) tCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return tCtx;
+  }
+
+  function stopTeaser() {
+    tNodes.forEach(function(n) { try { n.stop(); n.disconnect(); } catch(e){} });
+    tNodes = [];
+    clearTimeout(tTimer);
+    if (tBtn) {
+      tBtn.classList.remove('playing');
+      tBtn.querySelector('.tc-play-icon').textContent = '▶';
+      tBtn.querySelector('.tc-play-label').textContent = 'Preview';
+      tBtn = null;
+    }
+    tActive = null;
+  }
+
+  function makeBinaural(ctx, dest) {
+    // Left: 200 Hz, Right: 210 Hz — 10 Hz alpha wave binaural beat
+    var merger = ctx.createChannelMerger(2);
+    var gainL = ctx.createGain(); gainL.gain.value = 0.18;
+    var gainR = ctx.createGain(); gainR.gain.value = 0.18;
+    var oscL = ctx.createOscillator(); oscL.type = 'sine'; oscL.frequency.value = 200;
+    var oscR = ctx.createOscillator(); oscR.type = 'sine'; oscR.frequency.value = 210;
+    oscL.connect(gainL); gainL.connect(merger, 0, 0);
+    oscR.connect(gainR); gainR.connect(merger, 0, 1);
+    merger.connect(dest);
+    oscL.start(); oscR.start();
+    tNodes.push(oscL, oscR);
+  }
+
+  function makeAfrobeats(ctx, dest) {
+    // Rhythmic hi-hat + bass drum pattern at ~110 BPM
+    var bpm = 110, beat = 60 / bpm;
+    var now = ctx.currentTime;
+    var masterGain = ctx.createGain(); masterGain.gain.value = 0.5; masterGain.connect(dest);
+    // Bass kick on beats 1 and 3
+    [0, beat*2].forEach(function(t) {
+      var osc = ctx.createOscillator(); var g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(180, now+t);
+      osc.frequency.exponentialRampToValueAtTime(40, now+t+0.18);
+      g.gain.setValueAtTime(0.8, now+t); g.gain.exponentialRampToValueAtTime(0.001, now+t+0.22);
+      osc.connect(g); g.connect(masterGain); osc.start(now+t); osc.stop(now+t+0.25);
+      tNodes.push(osc);
+    });
+    // Snare on beat 2
+    var snBuf = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
+    var snData = snBuf.getChannelData(0);
+    for (var i=0; i<snData.length; i++) snData[i] = (Math.random()*2-1) * Math.pow(1-i/snData.length, 2.5);
+    [beat].forEach(function(t) {
+      var src = ctx.createBufferSource(); var g = ctx.createGain();
+      src.buffer = snBuf; g.gain.setValueAtTime(0.45, now+t); g.gain.exponentialRampToValueAtTime(0.001, now+t+0.09);
+      src.connect(g); g.connect(masterGain); src.start(now+t); tNodes.push(src);
+    });
+    // Offbeat hi-hat
+    [0, beat*0.5, beat, beat*1.5, beat*2, beat*2.5, beat*3, beat*3.5].forEach(function(t) {
+      var hBuf = ctx.createBuffer(1, ctx.sampleRate*0.04, ctx.sampleRate);
+      var hData = hBuf.getChannelData(0);
+      for (var i=0;i<hData.length;i++) hData[i]=(Math.random()*2-1)*Math.pow(1-i/hData.length,3);
+      var src=ctx.createBufferSource(); var g=ctx.createGain();
+      src.buffer=hBuf; g.gain.setValueAtTime(0.2,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.04);
+      src.connect(g); g.connect(masterGain); src.start(now+t); tNodes.push(src);
+    });
+  }
+
+  function makeKompa(ctx, dest) {
+    // Smooth 2-step Kompa feel ~80 BPM with bass and ride
+    var bpm = 80, beat = 60/bpm;
+    var now = ctx.currentTime;
+    var masterGain = ctx.createGain(); masterGain.gain.value = 0.45; masterGain.connect(dest);
+    // Bass line — root and fifth alternating
+    [0, beat, beat*2, beat*3].forEach(function(t, i) {
+      var freq = [80, 80, 120, 80][i];
+      var osc = ctx.createOscillator(); var g = ctx.createGain();
+      osc.type = 'triangle'; osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.7, now+t); g.gain.exponentialRampToValueAtTime(0.001, now+t+beat*0.85);
+      osc.connect(g); g.connect(masterGain); osc.start(now+t); osc.stop(now+t+beat);
+      tNodes.push(osc);
+    });
+    // Ride cymbal
+    [0, beat*0.5, beat, beat*1.5, beat*2, beat*2.5, beat*3].forEach(function(t) {
+      var rBuf = ctx.createBuffer(1, ctx.sampleRate*0.06, ctx.sampleRate);
+      var rData = rBuf.getChannelData(0);
+      for (var i=0;i<rData.length;i++) rData[i]=(Math.random()*2-1)*Math.pow(1-i/rData.length,1.8)*0.6;
+      var src=ctx.createBufferSource(); var g=ctx.createGain();
+      src.buffer=rBuf; g.gain.setValueAtTime(0.15,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.05);
+      src.connect(g); g.connect(masterGain); src.start(now+t); tNodes.push(src);
+    });
+  }
+
+  function makeClassical(ctx, dest) {
+    // Simple ascending Mozart-like arpeggio: C-E-G-C
+    var notes = [261.6, 329.6, 392.0, 523.3];
+    var dur = 0.32;
+    var masterGain = ctx.createGain(); masterGain.gain.value = 0.25; masterGain.connect(dest);
+    var rev = ctx.createGain(); rev.gain.value = 0.08; rev.connect(dest);
+    notes.forEach(function(freq, i) {
+      var t = ctx.currentTime + i * dur;
+      var osc = ctx.createOscillator(); var g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      // Add a harmonic overtone
+      var osc2 = ctx.createOscillator(); var g2 = ctx.createGain();
+      osc2.type = 'sine'; osc2.frequency.value = freq * 2; g2.gain.value = 0.12;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.7, t+0.02);
+      g.gain.setValueAtTime(0.7, t+dur*0.6); g.gain.exponentialRampToValueAtTime(0.001, t+dur*0.95);
+      osc.connect(g); g.connect(masterGain); osc2.connect(g2); g2.connect(rev);
+      osc.start(t); osc.stop(t+dur); osc2.start(t); osc2.stop(t+dur);
+      tNodes.push(osc, osc2);
+    });
+  }
+
+  window.toggleTeaser = function(btn, type) {
+    if (tActive === type) { stopTeaser(); return; }
+    stopTeaser();
+    var ctx = getCtx();
+    tActive = type;
+    tBtn = btn;
+    btn.classList.add('playing');
+    btn.querySelector('.tc-play-icon').textContent = '■';
+    btn.querySelector('.tc-play-label').textContent = 'Stop';
+    if (type === 'binaural')  makeBinaural(ctx, ctx.destination);
+    if (type === 'afrobeats') makeAfrobeats(ctx, ctx.destination);
+    if (type === 'kompa')     makeKompa(ctx, ctx.destination);
+    if (type === 'classical') makeClassical(ctx, ctx.destination);
+    // Auto-stop after 4 seconds
+    tTimer = setTimeout(stopTeaser, 4000);
+  };
+})();
 </script>
 <!-- Cookie Banner -->
 <div id="cookie-banner">
