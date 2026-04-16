@@ -706,9 +706,100 @@ body::after {
 .error-toast.visible {
   opacity: 1; transform: translateX(-50%) translateY(0);
 }
+
+/* ── Break timer overlay ─────────────────────────────────────────────────── */
+.break-overlay {
+  display: none; position: fixed; inset: 0; z-index: 250;
+  background: rgba(4,3,14,.92); backdrop-filter: blur(14px);
+  align-items: center; justify-content: center;
+}
+.break-overlay.visible { display: flex; }
+.break-box {
+  background: rgba(10,6,26,.98); border: 1px solid rgba(0,229,160,.25);
+  border-radius: 20px; padding: 40px 36px; max-width: 380px; width: calc(100% - 48px);
+  text-align: center;
+  box-shadow: 0 0 80px rgba(0,229,160,.12), 0 32px 80px rgba(0,0,0,.7);
+  animation: breakIn .35s cubic-bezier(.22,1,.36,1);
+}
+@keyframes breakIn {
+  from { opacity:0; transform: scale(.92) translateY(16px); }
+  to   { opacity:1; transform: scale(1)   translateY(0); }
+}
+.break-label {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 6px;
+}
+.break-headline {
+  font-family: var(--mono); font-size: 14px; color: rgba(220,200,255,.5);
+  margin-bottom: 28px; line-height: 1.5;
+}
+.break-ring {
+  position: relative; width: 148px; height: 148px;
+  margin: 0 auto 24px;
+}
+.break-ring svg { width: 148px; height: 148px; }
+.break-ring-time {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.break-time-num {
+  font-family: var(--mono); font-size: 32px; font-weight: 700; color: #fff;
+  line-height: 1;
+}
+.break-time-sub {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  margin-top: 4px;
+}
+.break-skip {
+  margin-top: 8px; background: transparent;
+  border: 1px solid rgba(124,77,255,.28); border-radius: 8px;
+  padding: 9px 22px; font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: rgba(180,160,220,.6); cursor: pointer;
+  transition: all .2s;
+}
+.break-skip:hover {
+  background: rgba(124,77,255,.1); color: var(--a-text);
+  border-color: rgba(124,77,255,.5);
+}
+.break-tick-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 14px; margin-bottom: 0;
+  font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+  cursor: pointer; user-select: none;
+}
+.break-tick-toggle input { accent-color: var(--green); cursor: pointer; }
 </style>
 </head>
 <body>
+
+<!-- ─── Break timer overlay ───────────────────────────────────────────────── -->
+<div class="break-overlay" id="breakOverlay">
+  <div class="break-box">
+    <div class="break-label">Break Time</div>
+    <div class="break-headline" id="breakHeadline">Step away. You've earned it.</div>
+    <div class="break-ring">
+      <svg viewBox="0 0 148 148">
+        <circle cx="74" cy="74" r="62" fill="none" stroke="rgba(0,229,160,.1)" stroke-width="8"/>
+        <circle id="breakArc" cx="74" cy="74" r="62" fill="none"
+          stroke="rgba(0,229,160,.65)" stroke-width="8"
+          stroke-dasharray="389.6" stroke-dashoffset="0"
+          stroke-linecap="round"
+          transform="rotate(-90 74 74)"/>
+      </svg>
+      <div class="break-ring-time">
+        <div class="break-time-num" id="breakDisplay">5:00</div>
+        <div class="break-time-sub" id="breakSub">remaining</div>
+      </div>
+    </div>
+    <label class="break-tick-toggle">
+      <input type="checkbox" id="breakTickToggle" checked onchange="toggleBreakTick(this.checked)">
+      clock ticker sound
+    </label>
+    <br>
+    <button class="break-skip" onclick="endBreak()">Skip break →</button>
+  </div>
+</div>
 
 <!-- ─── Pro gate overlay (shown for non-pro users) ────────────────────────── -->
 <!-- Pro gate replaced by Clerk auth below -->
@@ -1321,6 +1412,9 @@ async function endSession(natural = false) {
   // Save session to localStorage
   saveSession(durMin);
 
+  // Start break timer (5 min if session < 25 min, else 10 min)
+  startBreakTimer(durMin);
+
   // Switch to After tab
   switchTab('after', document.getElementById('tab-after'));
 
@@ -1684,6 +1778,107 @@ function playChime() {
     osc.connect(g); g.connect(ctx.destination);
     osc.start(t); osc.stop(t + 1.5);
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BREAK TIMER
+// ═══════════════════════════════════════════════════════════════════════════
+let breakInterval    = null;
+let breakRemaining   = 0;
+let breakTotal       = 0;
+let breakTickOn      = true;
+let breakTickInterval = null;
+
+function startBreakTimer(sessionDurMin) {
+  const breakMin = sessionDurMin < 25 ? 5 : 10;
+  breakTotal     = breakMin * 60;
+  breakRemaining = breakTotal;
+  breakTickOn    = document.getElementById('breakTickToggle').checked;
+
+  const headlines = breakMin === 5
+    ? "Short break. Rest your eyes."
+    : "10 minutes. Move, breathe, reset.";
+  document.getElementById('breakHeadline').textContent = headlines;
+  document.getElementById('breakSub').textContent      = 'remaining';
+
+  updateBreakDisplay();
+  document.getElementById('breakOverlay').classList.add('visible');
+
+  if (breakTickOn) startBreakTick();
+  breakInterval = setInterval(tickBreak, 1000);
+}
+
+function tickBreak() {
+  if (breakRemaining <= 0) {
+    endBreak();
+    return;
+  }
+  breakRemaining--;
+  updateBreakDisplay();
+}
+
+function updateBreakDisplay() {
+  const m = Math.floor(breakRemaining / 60);
+  const s = breakRemaining % 60;
+  document.getElementById('breakDisplay').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  const circumference = 389.6;
+  const progress = breakRemaining / breakTotal;
+  document.getElementById('breakArc').setAttribute('stroke-dashoffset',
+    (circumference * (1 - progress)).toFixed(1));
+}
+
+function endBreak() {
+  clearInterval(breakInterval); breakInterval = null;
+  stopBreakTick();
+  document.getElementById('breakOverlay').classList.remove('visible');
+  document.getElementById('breakSub').textContent = 'done';
+  // Re-enable start button for next session
+  document.getElementById('goalInput').disabled      = false;
+  document.getElementById('durationSelect').disabled = false;
+  document.getElementById('btnStart').style.display  = '';
+  document.getElementById('sessionBadge').className  = 'session-badge';
+  document.getElementById('sessionBadge').textContent = `${Math.round(timerTotal/60)}:00`;
+  timerRemaining = timerTotal;
+  updateTimerDisplay();
+  document.getElementById('timerSub').textContent     = 'ready to focus';
+  document.getElementById('timerSubHero').textContent = 'ready to focus';
+}
+
+function toggleBreakTick(on) {
+  breakTickOn = on;
+  if (breakInterval) { // break is running
+    if (on) startBreakTick(); else stopBreakTick();
+  }
+}
+
+// Clock ticker: sharp click every second via Web Audio
+function startBreakTick() {
+  stopBreakTick(); // clear any existing
+  breakTickInterval = setInterval(() => playTickSound(), 1000);
+  playTickSound(); // immediate first tick
+}
+
+function stopBreakTick() {
+  if (breakTickInterval) { clearInterval(breakTickInterval); breakTickInterval = null; }
+}
+
+function playTickSound() {
+  const ctx = getCtx();
+  // Sharp click: very short noise burst filtered to click frequencies
+  const bufSize = ctx.sampleRate * 0.012; // 12ms
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  // Bandpass to make it sound like a mechanical click
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1.8;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.55, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.012);
+  src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+  src.start();
 }
 
 // ── Session start tone ────────────────────────────────────────────────────
