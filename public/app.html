@@ -851,7 +851,7 @@ body::after {
 
     <!-- ── Timer Hero ─────────────────────────────────────────────────────── -->
     <div class="timer-hero">
-      <div class="timer-hero-ring-wrap">
+      <div class="timer-hero-ring-wrap" id="timerHeroRingWrap">
         <div class="timer-hero-glow"></div>
         <svg width="240" height="240" viewBox="0 0 240 240">
           <circle cx="120" cy="120" r="104" fill="none"
@@ -1296,8 +1296,13 @@ function startSession() {
   timerInterval = setInterval(tickTimer, 1000);
   playStartTone();
 
-  // Switch to Before tab so coach can prep the user
-  switchTab('before', document.getElementById('tab-before'));
+  // Pro users: switch to Halfway tab to show the mid-panel timer as the primary timer.
+  // Free users: stay on Before tab.
+  if (window.isPro) {
+    switchTab('halfway', document.getElementById('tab-halfway'));
+  } else {
+    switchTab('before', document.getElementById('tab-before'));
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2143,6 +2148,12 @@ function applyTier(pro, prevLastLogin, firstName) {
     // Pro: unlock everything, remove any upgrade overlay
     if (sel) Array.from(sel.options).forEach(o => { o.disabled = false; });
     document.getElementById('coachUpgradeOverlay')?.remove();
+
+    // Pro users start only through the AI coach — hide top-nav start button and hero timer ring
+    const btnStart = document.getElementById('btnStart');
+    if (btnStart) btnStart.style.display = 'none';
+    const heroRing = document.getElementById('timerHeroRingWrap');
+    if (heroRing) heroRing.style.display = 'none';
 
     if (!prevLastLogin) {
       // Brand new Pro user — show one-time welcome modal
