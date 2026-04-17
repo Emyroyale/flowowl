@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What's Your ADHD Brain Type? | Free 2-Min Quiz | FlowSpaceFocus</title>
+  <meta name="description" content="Find out how your brain is wired and get 5 personalised focus hacks sent straight to your inbox. Free 2-minute quiz — no sign-up required to start." />
+  <link rel="canonical" href="https://flowspacefocus.com/adhd-quiz" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080614;
+      color: #ede8ff;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 52px;
+      border-bottom: 1px solid rgba(110,60,220,.18);
+    }
+    .nav-logo {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      color: #ede8ff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .nav-cta {
+      background: #7c4dff;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+    .nav-cta:hover { opacity: .88; }
+
+    /* LAYOUT */
+    .quiz-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 24px 80px;
+    }
+
+    /* SCREEN SYSTEM */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* INTRO SCREEN */
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #f59e0b;
+      margin-bottom: 20px;
+    }
+    .eyebrow-star { margin-right: 6px; }
+    h1 {
+      font-size: clamp(26px, 5vw, 40px);
+      font-weight: 700;
+      letter-spacing: -.5px;
+      line-height: 1.15;
+      color: #ede8ff;
+      margin-bottom: 16px;
+    }
+    .intro-sub {
+      font-size: 16px;
+      color: rgba(188,163,255,.72);
+      line-height: 1.75;
+      margin-bottom: 32px;
+    }
+    .type-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .pill {
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 7px 16px;
+      border: 1px solid;
+    }
+    .pill-gold   { color: #d4a017; border-color: #d4a017; background: rgba(212,160,23,.1); }
+    .pill-purple { color: #a78bfa; border-color: #a78bfa; background: rgba(167,139,250,.1); }
+    .pill-pink   { color: #ec4899; border-color: #ec4899; background: rgba(236,72,153,.1); }
+    .pill-teal   { color: #2dd4bf; border-color: #2dd4bf; background: rgba(45,212,191,.1); }
+
+    .btn-start {
+      display: block;
+      width: 100%;
+      background: #f59e0b;
+      color: #1a1000;
+      border: none;
+      border-radius: 12px;
+      padding: 18px 24px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+      transition: opacity .15s;
+    }
+    .btn-start:hover { opacity: .9; }
+    .no-signup {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(188,163,255,.4);
+      margin-top: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* QUESTION SCREEN */
+    .progress-bar-wrap {
+      background: rgba(124,77,255,.12);
+      border-radius: 999px;
+      height: 4px;
+      margin-bottom: 40px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, #7c4dff, #a78bfa);
+      height: 100%;
+      border-radius: 999px;
+      transition: width .3s ease;
+    }
+    .q-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(188,163,255,.4);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 16px;
+    }
+    .q-text {
+      font-size: clamp(18px, 3vw, 24px);
+      font-weight: 700;
+      color: #ede8ff;
+      letter-spacing: -.3px;
+      line-height: 1.3;
+      margin-bottom: 28px;
+    }
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .answer-btn {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(110,60,220,.22);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 15px;
+      color: rgba(188,163,255,.85);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      text-align: left;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .answer-btn:hover {
+      border-color: #7c4dff;
+      background: rgba(124,77,255,.1);
+      color: #ede8ff;
+    }
+    .answer-btn.selected {
+      border-color: #7c4dff;
+      background: rgba(124,77,255,.16);
+      color: #ede8ff;
+    }
+
+    /* RESULT SCREEN */
+    .result-card {
+      background: linear-gradient(135deg, rgba(124,77,255,.14) 0%, rgba(124,77,255,.06) 100%);
+      border: 1px solid rgba(124,77,255,.4);
+      border-radius: 20px;
+      padding: 40px 36px;
+      margin-bottom: 32px;
+    }
+    .result-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(188,163,255,.45);
+      margin-bottom: 8px;
+    }
+    .result-type {
+      font-size: clamp(24px, 4vw, 34px);
+      font-weight: 700;
+      letter-spacing: -.4px;
+      margin-bottom: 16px;
+    }
+    .result-desc {
+      font-size: 15px;
+      color: rgba(188,163,255,.75);
+      line-height: 1.75;
+      margin-bottom: 24px;
+    }
+    .hacks-heading {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: rgba(188,163,255,.45);
+      margin-bottom: 12px;
+    }
+    .hacks-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .hacks-list li {
+      font-size: 14px;
+      color: rgba(188,163,255,.75);
+      line-height: 1.65;
+      padding-left: 18px;
+      position: relative;
+    }
+    .hacks-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: #7c4dff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .result-cta-box {
+      background: rgba(245,158,11,.07);
+      border: 1px solid rgba(245,158,11,.25);
+      border-radius: 16px;
+      padding: 28px 28px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .result-cta-box p {
+      font-size: 15px;
+      color: rgba(188,163,255,.75);
+      margin-bottom: 20px;
+      line-height: 1.65;
+    }
+    .btn-signup {
+      display: inline-block;
+      background: #7c4dff;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 36px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: opacity .15s;
+    }
+    .btn-signup:hover { opacity: .88; }
+    .retake {
+      text-align: center;
+      font-size: 13px;
+      color: rgba(188,163,255,.4);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .retake:hover { color: rgba(188,163,255,.7); }
+
+    @media (max-width: 600px) {
+      nav { padding: 14px 20px; }
+      .quiz-wrap { padding: 40px 20px 60px; }
+      .result-card { padding: 28px 24px; }
+      .result-cta-box { padding: 22px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">FlowSpaceFocus</a>
+  <button class="nav-cta" onclick="window.location.href='/app?signup=true'">Try FlowSpace →</button>
+</nav>
+
+<div class="quiz-wrap">
+
+  <!-- INTRO SCREEN -->
+  <div id="screen-intro" class="screen active">
+    <div class="eyebrow"><span class="eyebrow-star">✦</span> Free 2-min quiz</div>
+    <h1>What's Your ADHD Brain Type?</h1>
+    <p class="intro-sub">Find out how your brain is wired and get 5 personalised focus hacks sent straight to your inbox.</p>
+    <div class="type-pills">
+      <span class="pill pill-gold">The List Architect</span>
+      <span class="pill pill-purple">The Sensory Seeker</span>
+      <span class="pill pill-pink">The People Pleaser</span>
+      <span class="pill pill-teal">The Reward-Driven Racer</span>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">Take the Free Quiz →</button>
+    <p class="no-signup">No sign-up required to start</p>
+  </div>
+
+  <!-- QUESTION SCREEN -->
+  <div id="screen-question" class="screen">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="q-counter" id="q-counter">Question 1 of 5</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="answers" id="answers"></div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="screen-result" class="screen">
+    <div class="result-card">
+      <div class="result-label">Your ADHD brain type</div>
+      <div class="result-type" id="result-type"></div>
+      <p class="result-desc" id="result-desc"></p>
+      <div class="hacks-heading">Your 5 focus hacks</div>
+      <ul class="hacks-list" id="result-hacks"></ul>
+    </div>
+    <div class="result-cta-box">
+      <p>FlowSpaceFocus is built for exactly how your brain works. Start your first session free — no credit card required.</p>
+      <button class="btn-signup" onclick="window.location.href='/app?signup=true'">Start focusing for free →</button>
+    </div>
+    <p class="retake" onclick="retakeQuiz()">Retake the quiz</p>
+  </div>
+
+</div>
+
+<footer style="border-top:1px solid rgba(110,60,220,.18);padding:32px 52px;margin-top:0;">
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(140,110,200,.35);">© 2026 FlowSpaceFocus by Royale Automation. All rights reserved.</div>
+    <div style="display:flex;gap:24px;">
+      <a href="/for-adhd-minds" style="font-size:11px;color:rgba(140,110,200,.4);font-family:'JetBrains Mono',monospace;">For ADHD Minds</a>
+      <a href="/faq" style="font-size:11px;color:rgba(140,110,200,.4);font-family:'JetBrains Mono',monospace;">FAQ</a>
+      <a href="https://blog.flowspacefocus.com" style="font-size:11px;color:rgba(140,110,200,.4);font-family:'JetBrains Mono',monospace;">Blog</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const questions = [
+    {
+      text: "When you sit down to work, what usually happens first?",
+      answers: [
+        { text: "I make a list of everything I need to do before I can start.", type: "list" },
+        { text: "I need to get my environment just right — lighting, sound, space.", type: "sensory" },
+        { text: "I check messages first to make sure no one needs me.", type: "pleaser" },
+        { text: "I scroll or procrastinate until the deadline pressure kicks in.", type: "racer" }
+      ]
+    },
+    {
+      text: "What helps you stay focused most?",
+      answers: [
+        { text: "A clear step-by-step plan I can tick off as I go.", type: "list" },
+        { text: "The right background music or ambient noise.", type: "sensory" },
+        { text: "Knowing that someone is counting on me.", type: "pleaser" },
+        { text: "A tight deadline or a reward waiting at the end.", type: "racer" }
+      ]
+    },
+    {
+      text: "What's your biggest focus killer?",
+      answers: [
+        { text: "Tasks that feel vague, unstructured, or undefined.", type: "list" },
+        { text: "Uncomfortable environments — noise, clutter, bad lighting.", type: "sensory" },
+        { text: "Worrying that I've left someone's message unanswered.", type: "pleaser" },
+        { text: "Tasks with no clear reward, deadline, or stakes.", type: "racer" }
+      ]
+    },
+    {
+      text: "How do you feel when you finish something?",
+      answers: [
+        { text: "Satisfied — especially if I can cross it off a list.", type: "list" },
+        { text: "Relieved that the conditions finally came together.", type: "sensory" },
+        { text: "Happy if others noticed or benefited from the work.", type: "pleaser" },
+        { text: "Already looking for the next challenge or task.", type: "racer" }
+      ]
+    },
+    {
+      text: "How do you typically handle deadlines?",
+      answers: [
+        { text: "I create my own early deadlines so I'm never behind.", type: "list" },
+        { text: "Deadlines stress me out — I need my setup perfect to begin.", type: "sensory" },
+        { text: "I'm more motivated by people than deadlines.", type: "pleaser" },
+        { text: "The closer the deadline, the sharper my focus gets.", type: "racer" }
+      ]
+    }
+  ];
+
+  const results = {
+    list: {
+      type: "The List Architect",
+      color: "#d4a017",
+      desc: "Your brain thrives on structure. You're at your best when you have a clear plan, defined steps, and the satisfaction of ticking things off. Open-ended tasks feel paralysing — but give you a roadmap and you're unstoppable.",
+      hacks: [
+        "Break every task into 3 concrete micro-steps before you start.",
+        "Use a 'done list' alongside your to-do list to see real progress.",
+        "Set a 2-minute planning ritual before each focus session.",
+        "Treat vague tasks as placeholders — refine them before sitting down.",
+        "Celebrate completed blocks, not just finished projects."
+      ]
+    },
+    sensory: {
+      type: "The Sensory Seeker",
+      color: "#a78bfa",
+      desc: "Your environment is your superpower — or your kryptonite. When your surroundings are right, you enter flow effortlessly. When they're off, starting feels almost impossible. Optimising your space is not procrastination — it's strategy.",
+      hacks: [
+        "Build a 5-minute 'environment ritual' before every session.",
+        "Use binaural beats or brown noise to anchor focus states.",
+        "Keep one designated 'deep work zone' and use it consistently.",
+        "Remove visual clutter from your desk before beginning.",
+        "Try FlowSpace's curated focus playlists matched to your energy level."
+      ]
+    },
+    pleaser: {
+      type: "The People Pleaser",
+      color: "#ec4899",
+      desc: "You do your best work when it matters to someone. Accountability, connection, and purpose drive you far more than personal deadlines. The risk: you deplete yourself fulfilling others' priorities before your own.",
+      hacks: [
+        "Find an accountability partner and share one daily goal.",
+        "Reframe solo tasks as a gift to your future self — or someone you love.",
+        "Block 'inbox-free' time in the morning before checking messages.",
+        "Write down who benefits from your work before each session.",
+        "Use FlowOwl's check-ins to simulate accountability without the pressure."
+      ]
+    },
+    racer: {
+      type: "The Reward-Driven Racer",
+      color: "#2dd4bf",
+      desc: "You run on adrenaline and dopamine. Tight deadlines, challenges, and visible rewards light up your brain. Without stakes, tasks feel invisible. The fix isn't discipline — it's engineering urgency and reward into everything you do.",
+      hacks: [
+        "Create artificial deadlines for every task — treat them as real.",
+        "Use a visible countdown timer to manufacture urgency.",
+        "Set micro-rewards for completing each focus block.",
+        "Tell someone else your deadline to make it feel real.",
+        "Use FlowSpace's session timer to turn every task into a race."
+      ]
+    }
+  };
+
+  let currentQ = 0;
+  let scores = { list: 0, sensory: 0, pleaser: 0, racer: 0 };
+
+  function startQuiz() {
+    currentQ = 0;
+    scores = { list: 0, sensory: 0, pleaser: 0, racer: 0 };
+    showScreen('screen-question');
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = questions[currentQ];
+    document.getElementById('q-counter').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+    document.getElementById('q-text').textContent = q.text;
+    document.getElementById('progress-bar').style.width = `${(currentQ / questions.length) * 100}%`;
+
+    const shuffled = [...q.answers].sort(() => Math.random() - 0.5);
+    const container = document.getElementById('answers');
+    container.innerHTML = '';
+    shuffled.forEach(answer => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.textContent = answer.text;
+      btn.onclick = () => selectAnswer(answer.type, btn);
+      container.appendChild(btn);
+    });
+  }
+
+  function selectAnswer(type, btn) {
+    document.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    scores[type]++;
+    setTimeout(() => {
+      currentQ++;
+      if (currentQ < questions.length) {
+        renderQuestion();
+      } else {
+        showResult();
+      }
+    }, 320);
+  }
+
+  function showResult() {
+    const topType = Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+    const r = results[topType];
+
+    document.getElementById('result-type').textContent = r.type;
+    document.getElementById('result-type').style.color = r.color;
+    document.getElementById('result-desc').textContent = r.desc;
+
+    const hacksList = document.getElementById('result-hacks');
+    hacksList.innerHTML = '';
+    r.hacks.forEach(hack => {
+      const li = document.createElement('li');
+      li.textContent = hack;
+      hacksList.appendChild(li);
+    });
+
+    document.getElementById('progress-bar').style.width = '100%';
+    showScreen('screen-result');
+  }
+
+  function retakeQuiz() {
+    showScreen('screen-intro');
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
