@@ -14,6 +14,7 @@
     { "src": "/how-it-works", "dest": "/public/how-it-works.html" },
     { "src": "/ai-accountability-coach", "dest": "/public/ai-accountability-coach.html" },
     { "src": "/for-adhd-minds", "dest": "/public/for-adhd-minds.html" },
+    { "src": "/adhd-quiz", "dest": "/public/adhd-quiz.html" },
     { "src": "/focus-playlists", "dest": "/public/focus-playlists.html" },
     { "src": "/pricing", "dest": "/public/pricing.html" },
     { "src": "/", "dest": "/public/index.html" },
