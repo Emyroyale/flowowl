@@ -1668,6 +1668,7 @@ const VIBES = {
   'study-flow':          { label:'📖 Study',       tracks:['bossa-nova-01','golden-hour-01','late-night-pages-01','late-library-01','late-library-02'] },
   'focus-classics':      { label:'🎼 Classics',    tracks:['late-library-05','late-library-06','late-library-07','late-library-08'] },
   'energy-reset':        { label:'⚡ Energy',      tracks:['energy-01','energy-02'] },
+  'binaural':            { label:'🧠 Binaural',    tracks:['binaural_flow/binaural01_flow','binaural_flow/binaural02_flow','binaural_flow/binaural03_flow','binaural_flow/binaural04_flow','binaural_flow/binaural05_flow','binaural_flow/binaural06_flow'] },
 };
 
 let audioEl       = null;   // HTML Audio for music tracks
@@ -1719,7 +1720,7 @@ function loadAndPlayTrack(vibeId, slug) {
     audioEl.addEventListener('error', () => nextTrack());
   }
   audioEl.volume = masterVolume;
-  audioEl.src = `${S3}${vibeId}/${slug}.mp3`;
+  audioEl.src = slug.includes('/') ? `${S3}${slug}.mp3` : `${S3}${vibeId}/${slug}.mp3`;
   audioEl.play().catch(() => {});
 }
 
@@ -1730,18 +1731,6 @@ function nextTrack() {
   loadAndPlayTrack(currentVibe, vibe.tracks[trackIdx]);
 }
 
-// ── Binaural beats (Web Audio) ────────────────────────────────────────────
-function playBinaural() {
-  const ctx = getCtx(); const mg = makeSynthMaster();
-  [[-1, 200], [1, 210]].forEach(([pan, freq]) => {
-    const osc = ctx.createOscillator();
-    const p   = ctx.createStereoPanner();
-    osc.type = 'sine'; osc.frequency.value = freq; p.pan.value = pan;
-    osc.connect(p); p.connect(mg); osc.start();
-    synthNodes.push(osc, p);
-  });
-  synthNodes.push(mg);
-}
 
 // ── Kompa synth (warm bass pulse + filtered pad) ──────────────────────────
 function playKompa() {
@@ -1822,9 +1811,8 @@ function selectVibe(vibe, btn) {
   stopAllSounds();
   currentVibe = vibe;
 
-  if (VIBES[vibe])              playVibeTracks(vibe);
-  else if (vibe === 'binaural') playBinaural();
-  else if (vibe === 'brown')    playBrown();
+  if (VIBES[vibe])           playVibeTracks(vibe);
+  else if (vibe === 'brown') playBrown();
 
   document.querySelectorAll('.genre-chip').forEach(b => b.classList.toggle('active', b.dataset.vibe === vibe));
 
