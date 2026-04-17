@@ -889,9 +889,8 @@ body::after {
         autocomplete="off"
       />
       <select id="durationSelect" class="header-duration-select">
-        <option value="15">15 min</option>
-        <option value="25" selected>25 min</option>
-        <option value="45">45 min</option>
+        <option value="15" selected>15 min</option>
+        <option value="30">30 min</option>
         <option value="60">60 min</option>
         <option value="90">90 min</option>
       </select>
@@ -926,7 +925,7 @@ body::after {
             transform="rotate(-90 120 120)"/>
         </svg>
         <div class="timer-hero-label">
-          <div class="timer-hero-time" id="timerDisplayHero">25:00</div>
+          <div class="timer-hero-time" id="timerDisplayHero">15:00</div>
           <div class="timer-hero-sub" id="timerSubHero">ready to focus</div>
         </div>
       </div>
@@ -994,8 +993,7 @@ body::after {
             <span class="pre-start-hint" id="preStartHint">Set your goal above, then chat with your coach before starting.</span>
             <select id="coachDurationSelect" class="coach-duration-select" style="display:none" onchange="document.getElementById('durationSelect').value=this.value">
               <option value="15">15 min</option>
-              <option value="25" selected>25 min</option>
-              <option value="45">45 min</option>
+              <option value="30" selected>30 min</option>
               <option value="60">60 min</option>
               <option value="90">90 min</option>
             </select>
@@ -1489,7 +1487,7 @@ async function endSession(natural = false) {
   // Save session to localStorage
   saveSession(durMin);
 
-  // Start break timer (5 min if session < 25 min, else 10 min)
+  // Start break timer (5 min for 30 min sessions, 10 min for 60/90 min, none for 15 min)
   startBreakTimer(durMin);
 
   // Switch to After tab
@@ -1865,12 +1863,17 @@ let breakRemaining   = 0;
 let breakTotal       = 0;
 let breakTickOn      = true;
 let breakTickInterval = null;
+let breakEndingFired  = false;
 
 function startBreakTimer(sessionDurMin) {
-  const breakMin = sessionDurMin < 25 ? 5 : 10;
-  breakTotal     = breakMin * 60;
-  breakRemaining = breakTotal;
-  breakTickOn    = document.getElementById('breakTickToggle').checked;
+  // 15 min sessions get no break
+  if (sessionDurMin <= 15) return;
+
+  const breakMin = sessionDurMin === 30 ? 5 : 10;
+  breakTotal        = breakMin * 60;
+  breakRemaining    = breakTotal;
+  breakEndingFired  = false;
+  breakTickOn       = document.getElementById('breakTickToggle').checked;
 
   const headlines = breakMin === 5
     ? "Short break. Rest your eyes."
@@ -1891,6 +1894,11 @@ function tickBreak() {
     return;
   }
   breakRemaining--;
+  // Alert user at 60 seconds remaining
+  if (breakRemaining === 60 && !breakEndingFired) {
+    breakEndingFired = true;
+    playBreakEndingWarning();
+  }
   updateBreakDisplay();
 }
 
@@ -1963,6 +1971,24 @@ function playTickSound() {
   g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.012);
   src.connect(bp); bp.connect(g); g.connect(ctx.destination);
   src.start();
+}
+
+// ── Break ending warning (60 s remaining) — three ascending chimes ────────
+function playBreakEndingWarning() {
+  const ctx = getCtx();
+  const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g   = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const t = ctx.currentTime + i * 0.22;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.22, t + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.5);
+  });
 }
 
 // ── Session start tone ────────────────────────────────────────────────────
