@@ -2039,7 +2039,19 @@ window.addEventListener('DOMContentLoaded', () => {
   // Goal input → enable Start button in header
   const goalEl = document.getElementById('goalInput');
   goalEl.addEventListener('input', () => {
-    // Start button always available, but goal is captured at click time
+    const goal = goalEl.value.trim();
+    const subHero = document.getElementById('timerSubHero');
+    const sub     = document.getElementById('timerSub');
+    if (!sessionRunning) {
+      if (goal) {
+        const label = goal.length > 32 ? goal.slice(0, 32) + '…' : goal;
+        subHero.textContent = `🔒 ${label}`;
+        sub.textContent     = 'locked in';
+      } else {
+        subHero.textContent = 'ready to focus';
+        sub.textContent     = 'ready';
+      }
+    }
   });
 });
 </script>
